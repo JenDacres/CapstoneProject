@@ -1,0 +1,84 @@
+/* General styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+/* Container for form */
+.container {
+    background: white;
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 350px;
+    text-align: left;
+    position: relative;
+}
+
+/* Back button */
+.back-button {
+    background: none;
+    border: none;
+    font-size: 20px;
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    cursor: pointer;
+}
+
+/* Headings */
+h2 {
+    text-align: left;
+    margin-bottom: 15px;
+    font-size: 24px;
+}
+
+/* Form styling */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Labels */
+label {
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+/* Input fields */
+input, select {
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #e8e8e8;
+    width: 100%;
+}
+
+/* Password field */
+input[type="password"] {
+    font-size: 20px;
+    letter-spacing: 2px;
+}
+
+/* Submit button */
+.submit-button {
+    margin-top: 20px;
+    background-color: black;
+    color: white;
+    font-size: 16px;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.submit-button:hover {
+    background-color: #333;
+}
