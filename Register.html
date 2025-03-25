@@ -53,7 +53,7 @@
                 });
 
                 const result = await response.json();
-                alert(result.message);
+                alert(result.message + "\nYour User ID: " + result.user_id);
             } catch (error) {
                 alert("Error registering user");
             }
