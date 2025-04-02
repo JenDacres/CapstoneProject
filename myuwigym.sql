@@ -1,5 +1,3 @@
-CREATE DATABASE myuwigym;
-
 USE myuwigym;
 
 -- Users Table
