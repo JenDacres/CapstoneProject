@@ -3,16 +3,90 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Member's Dashboard</title>
-        <link rel="stylesheet" href="member.css">
+        <title>Member Homepage</title>
+        <link rel="stylesheet" href="member.css"> 
+
+        <script>
+            // Function to load a new page view dynamically
+            function loadPage(pageId) {
+                let content = ''; // Initialize an empty string to store the page content
+
+                // Switch case to determine which page to load
+                switch (pageId) {
+                    case 'homepage': // Homepage view
+                        content = `
+                            <h1>Homepage</h1>
+                            <button onclick="loadPage('bookSlot')">Book Slot</button>
+                            <button onclick="loadPage('manageSlot')">Manage Slot</button>
+                            <button onclick="loadPage('cancelSlot')">Cancel Slot</button>
+                            <button onclick="loadPage('liveOccupancy')">Live Occupancy</button>
+                            <button onclick="loadPage('createReport')">Create Report</button>
+                        `;
+                        break;
+
+                    case 'bookSlot': // Book Slot page
+                        content = `
+                            <h1>Book a Slot</h1>
+                            <p>Select a time slot for your gym session.</p>
+                            <button onclick="loadPage('homepage')">Back to Homepage</button>
+                        `;
+                        break;
+
+                    case 'manageSlot': // Manage Slot page
+                        content = `
+                            <h1>Manage Your Slot</h1>
+                            <p>Modify your existing booking.</p>
+                            <button onclick="loadPage('homepage')">Back to Homepage</button>
+                        `;
+                        break;
+
+                    case 'cancelSlot': // Cancel Slot page
+                        content = `
+                            <h1>Cancel a Slot</h1>
+                            <p>Cancel an already booked gym slot.</p>
+                            <button onclick="loadPage('homepage')">Back to Homepage</button>
+                        `;
+                        break;
+
+                    case 'liveOccupancy': // Live Occupancy page
+                        content = `
+                            <h1>Live Occupancy</h1>
+                            <p>Check real-time gym capacity.</p>
+                            <button onclick="loadPage('homepage')">Back to Homepage</button>
+                        `;
+                        break;
+
+                    case 'createReport': // Create Report page
+                        content = `
+                            <h1>Create a Report</h1>
+                            <p>If you notice any broken equipment or unusual activity in the gym, please report it here. Your help keeps the gym safe and functional!</p>
+                            <textarea id="reportText" rows="20" cols="70" placeholder="Type your report here..."></textarea>
+                            <br>
+                            <div class="button-container">
+                                <button onclick="submitReport()">Submit Report</button>
+                                <button onclick="loadPage('homepage')">Back to Homepage</button>
+                            </div>
+                        `;
+                        break;
+                }
+
+                // Replace the entire content inside the <body> with the selected page's content
+                document.body.innerHTML = content;
+            }
+
+            // Function to handle report submission
+            function submitReport() {
+                const reportText = document.getElementById('reportText').value;
+                if (reportText.trim() === '') {
+                    alert('Please type a report before submitting.');
+                } else {
+                    alert('Report submitted successfully!');
+                }
+            }
+        </script>
     </head>
 
-    <body>
-        <h1>Dashboard</h1>
-        <button>Book Slot</button>
-        <button>Manage Slot</button>
-        <button>Cancel Slot</button>
-        <button>Live Occupancy</button>
-        <button>Create Report</button>
+    <body 
+        onload="loadPage('homepage')"> <!-- Load the homepage by default when the page loads -->
     </body>
 </html>
