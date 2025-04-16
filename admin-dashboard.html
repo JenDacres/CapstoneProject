@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MyUWIGym | Admin Dashboard</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 15px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background-color: #02080eac;
+      color: white;
+    }
+
+    .checkin {
+      color: green;
+      font-weight: bold;
+    }
+
+    .checkout {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Dashboard - Live Check-in / Check-out</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Event</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="log-body">
+    </tbody>
+  </table>
+
+  <script>
+    const socket = io("http://localhost:5000"); // Update if your backend is hosted elsewhere
+    const logBody = document.getElementById("log-body");
+
+    function addLog(userId, type) {
+      const row = document.createElement("tr");
+      const time = new Date().toLocaleTimeString();
+
+      row.innerHTML = `
+        <td>${userId}</td>
+        <td class="${type}">${type.toUpperCase()}</td>
+        <td>${time}</td>
+      `;
+
+      logBody.prepend(row); // newest on top
+    }
+
+    socket.on("checkin", (data) => {
+      addLog(data.userId, "checkin");
+    });
+
+    socket.on("checkout", (data) => {
+      addLog(data.userId, "checkout");
+    });
+  </script>
+</body>
+</html>
