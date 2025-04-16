@@ -43,11 +43,12 @@ function generateUserId(role, id) {
 }
 
 app.post("/register", (req, res) => {
-    const { full_name, email, role, phone, password } = req.body;
+    const { full_name, email, role, area_code, phone, password } = req.body;
+    const fullPhone = `${area_code}${phone}`;
     bcrypt.hash(password, 10, (err, hash) => {
         if (err) return res.json({ error: err });
         const sql = "INSERT INTO users (full_name, email, role, phone, password_hash) VALUES (?, ?, ?, ?, ?)";
-        db.query(sql, [full_name, email, role, phone, hash], (err, result) => {
+        db.query(sql, [full_name, email, role, fullPhone, hash], (err, result) => {
             if (err) return res.status(500).json({ error: err.sqlMessage });
             const newUserId = generateUserId(role, result.insertId);
             db.query("UPDATE users SET user_id = ? WHERE id = ?", [newUserId, result.insertId], (err) => {
@@ -111,7 +112,7 @@ app.post("/check-in", authenticateToken, (req, res) => {
                             });
                         }
                     });
-                }, 45 * 60 * 1000); // 45 minutes
+                }, 45 * 60 * 1000);
             });
         });
     });
@@ -135,6 +136,15 @@ app.get("/live-occupancy", (req, res) => {
     });
 });
 
-app.listen(5000, () => {
-    console.log("Server running on port 5000...");
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // or set to your frontend URL
+    methods: ["GET", "POST"]
+  }
 });
+
+server.listen(5000, () => {
+  console.log("Server running on port 5000...");
+});
+

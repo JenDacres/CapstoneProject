@@ -1,7 +1,6 @@
-/* General styles */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f9f9f9;
+    background-color: #f4f4f4;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -9,76 +8,111 @@ body {
     margin: 0;
 }
 
-/* Container for form */
 .container {
     background: white;
-    padding: 20px;
-    border-radius: 20px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    width: 90%;
-    max-width: 350px;
-    text-align: left;
+    padding: 30px 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
     position: relative;
 }
 
-/* Back button */
-.back-button {
-    background: none;
-    border: none;
-    font-size: 20px;
-    position: absolute;
-    left: 10px;
-    top: 10px;
-    cursor: pointer;
-}
-
-/* Headings */
 h2 {
-    text-align: left;
-    margin-bottom: 15px;
-    font-size: 24px;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-/* Form styling */
 form {
     display: flex;
     flex-direction: column;
 }
 
-/* Labels */
 label {
-    font-size: 14px;
-    margin-top: 10px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    margin-top: 15px;
 }
 
-/* Input fields */
-input, select {
+input,
+select {
     padding: 10px;
     font-size: 16px;
-    border-radius: 5px;
     border: 1px solid #ccc;
-    background-color: #e8e8e8;
-    width: 100%;
+    border-radius: 5px;
 }
 
-/* Password field */
-input[type="password"] {
-    font-size: 20px;
-    letter-spacing: 2px;
-}
-
-/* Submit button */
 .submit-button {
-    margin-top: 20px;
-    background-color: black;
+    background-color: #02080eac;
     color: white;
+    padding: 12px;
     font-size: 16px;
     border: none;
-    padding: 12px;
-    border-radius: 10px;
+    border-radius: 5px;
+    margin-top: 25px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 .submit-button:hover {
-    background-color: #333;
+    background-color: #01060c;
+}
+
+.back-button {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #333;
+}
+
+.error-message {
+    color: red;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+input.invalid, select.invalid {
+    border-color: red;
+}
+
+.success-message {
+    margin-top: 15px;
+    text-align: center;
+    font-weight: bold;
+    color: green;
+}
+
+/* Success message fade-in */
+.success-message {
+    margin-top: 15px;
+    text-align: center;
+    font-weight: bold;
+    color: green;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+}
+
+.success-message.visible {
+    opacity: 1;
+}
+
+/* Password strength meter */
+#password-strength {
+    margin-top: 5px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.weak {
+    color: red;
+}
+.medium {
+    color: orange;
+}
+.strong {
+    color: green;
 }
