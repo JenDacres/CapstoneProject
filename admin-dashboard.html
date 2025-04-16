@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>MyUWIGym | Admin Dashboard</title>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,9 +13,17 @@
       padding: 20px;
     }
 
-    h1 {
+    h1, h2 {
       text-align: center;
-      margin-bottom: 30px;
+    }
+
+    #occupancy-count.full {
+      color: red;
+      font-weight: bold;
+    }
+
+    h2 span {
+      transition: all 0.3s ease;
     }
 
     table {
@@ -22,6 +31,7 @@
       border-collapse: collapse;
       background: #fff;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
     }
 
     th, td {
@@ -44,45 +54,135 @@
       color: red;
       font-weight: bold;
     }
+
+    .flash {
+      animation: flash 0.4s ease-in-out;
+    }
+
+    @keyframes flash {
+      0% { transform: scale(1.2); color: #007bff; }
+      100% { transform: scale(1); }
+    }
+
+    #chart-container {
+      width: 300px;
+      margin: 30px auto;
+    }
   </style>
 </head>
 <body>
   <h1>Admin Dashboard - Live Check-in / Check-out</h1>
+  <h2 id="occupancy-count">🏋️ Current Occupancy: <span id="occupancy-number">0</span></h2>
+
+  <div id="chart-container">
+    <canvas id="activityChart"></canvas>
+  </div>
+
   <table>
     <thead>
       <tr>
         <th>User ID</th>
+        <th>Name</th>
+        <th>Role</th>
         <th>Event</th>
         <th>Time</th>
       </tr>
     </thead>
-    <tbody id="log-body">
-    </tbody>
+    <tbody id="log-body"></tbody>
   </table>
 
-  <script>
-    const socket = io("http://localhost:5000"); // Update if your backend is hosted elsewhere
-    const logBody = document.getElementById("log-body");
+  <audio id="sound-checkin" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
+  <audio id="sound-checkout" src="https://www.soundjay.com/buttons/sounds/button-4.mp3"></audio>
 
-    function addLog(userId, type) {
+  <script>
+    const socket = io("http://localhost:5000");
+    const logBody = document.getElementById("log-body");
+    const occupancyEl = document.getElementById("occupancy-count");
+    const occupancyNumber = document.getElementById("occupancy-number");
+
+    const soundCheckIn = document.getElementById("sound-checkin");
+    const soundCheckOut = document.getElementById("sound-checkout");
+
+    let currentCount = 0;
+    let checkinCount = 0;
+    let checkoutCount = 0;
+
+    const activityChart = new Chart(document.getElementById("activityChart"), {
+      type: "doughnut",
+      data: {
+        labels: ["Check-ins", "Check-outs"],
+        datasets: [{
+          data: [0, 0],
+          backgroundColor: ["#4caf50", "#f44336"],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: "bottom"
+          }
+        }
+      }
+    });
+
+    function updateChart() {
+      activityChart.data.datasets[0].data = [checkinCount, checkoutCount];
+      activityChart.update();
+    }
+
+    function addLog(userId, name, role, type) {
       const row = document.createElement("tr");
       const time = new Date().toLocaleTimeString();
 
       row.innerHTML = `
         <td>${userId}</td>
+        <td>${name}</td>
+        <td>${role}</td>
         <td class="${type}">${type.toUpperCase()}</td>
         <td>${time}</td>
       `;
 
-      logBody.prepend(row); // newest on top
+      logBody.prepend(row);
     }
 
+    function updateOccupancyDisplay(count) {
+      currentCount = count;
+      occupancyNumber.textContent = count;
+      occupancyNumber.classList.add("flash");
+
+      setTimeout(() => occupancyNumber.classList.remove("flash"), 300);
+
+      if (count >= 25) {
+        occupancyEl.classList.add("full");
+        occupancyEl.innerHTML = `🚫 Gym Full - Capacity Reached (<span id="occupancy-number" class="flash">${count}</span>)`;
+      } else {
+        occupancyEl.classList.remove("full");
+        occupancyEl.innerHTML = `🏋️ Current Occupancy: <span id="occupancy-number" class="flash">${count}</span>`;
+      }
+    }
+
+    // Initial occupancy fetch
+    fetch("http://localhost:5000/live-occupancy")
+      .then(res => res.json())
+      .then(data => updateOccupancyDisplay(data.occupancy));
+
+    // Handle checkin event
     socket.on("checkin", (data) => {
-      addLog(data.userId, "checkin");
+      addLog(data.userId, data.full_name || "Unknown", data.role || "Member", "checkin");
+      updateOccupancyDisplay(currentCount + 1);
+      soundCheckIn.play();
+      checkinCount++;
+      updateChart();
     });
 
+    // Handle checkout event
     socket.on("checkout", (data) => {
-      addLog(data.userId, "checkout");
+      addLog(data.userId, data.full_name || "Unknown", data.role || "Member", "checkout");
+      updateOccupancyDisplay(Math.max(0, currentCount - 1));
+      soundCheckOut.play();
+      checkoutCount++;
+      updateChart();
     });
   </script>
 </body>
