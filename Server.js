@@ -87,45 +87,87 @@ app.delete("/cancel-booking/:id", authenticateToken, (req, res) => {
 
 app.post("/check-in", authenticateToken, (req, res) => {
     const userId = req.user.userId;
+  
     db.query("SELECT COUNT(*) AS occupancy FROM gym_visits WHERE check_out IS NULL", (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
+  
+      const currentOccupancy = result[0].occupancy;
+      if (currentOccupancy >= 25) {
+        return res.status(403).json({ message: "Gym is at full capacity. Please wait." });
+      }
+  
+      db.query("SELECT * FROM gym_visits WHERE user_id = ? AND check_out IS NULL", [userId], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
-        const currentOccupancy = result[0].occupancy;
-        if (currentOccupancy >= 25) {
-            return res.status(403).json({ message: "Gym is at full capacity. Please wait." });
-        }
-        db.query("SELECT * FROM gym_visits WHERE user_id = ? AND check_out IS NULL", [userId], (err, result) => {
-            if (err) return res.status(500).json({ error: err.message });
-            if (result.length > 0) return res.status(400).json({ message: "User already checked in" });
-            db.query("INSERT INTO gym_visits (user_id) VALUES (?)", [userId], (err, insertResult) => {
-                if (err) return res.status(500).json({ error: err.message });
-                res.json({ message: "Check-in successful" });
-
-                setTimeout(() => {
-                    db.query("UPDATE gym_visits SET check_out = CURRENT_TIMESTAMP WHERE user_id = ? AND check_out IS NULL", [userId], (err) => {
-                        if (!err) {
-                            db.query("SELECT phone FROM users WHERE id = ?", [userId], (err, result) => {
-                                if (!err && result.length > 0) {
-                                    const phone = result[0].phone;
-                                    sendSMS(phone, "Your gym session has ended. Thank you for visiting MyUWIGym!");
-                                    console.log(`Admin notified: User ${userId} auto checked out.`);
-                                }
-                            });
-                        }
+        if (result.length > 0) return res.status(400).json({ message: "User already checked in" });
+  
+        db.query("INSERT INTO gym_visits (user_id) VALUES (?)", [userId], (err) => {
+          if (err) return res.status(500).json({ error: err.message });
+  
+          res.json({ message: "Check-in successful" });
+  
+          // Emit real-time event with user info
+          db.query("SELECT full_name, role FROM users WHERE id = ?", [userId], (err, result) => {
+            if (!err && result.length > 0) {
+              const user = result[0];
+              io.emit("checkin", {
+                userId,
+                full_name: user.full_name,
+                role: user.role
+              });
+            }
+          });
+  
+          // Auto-check-out after 45 mins
+          setTimeout(() => {
+            db.query("UPDATE gym_visits SET check_out = CURRENT_TIMESTAMP WHERE user_id = ? AND check_out IS NULL", [userId], (err) => {
+              if (!err) {
+                db.query("SELECT phone, full_name, role FROM users WHERE id = ?", [userId], (err, result) => {
+                  if (!err && result.length > 0) {
+                    const { phone, full_name, role } = result[0];
+  
+                    // Notify admin and user
+                    io.emit("checkout", {
+                      userId,
+                      full_name,
+                      role
                     });
-                }, 45 * 60 * 1000);
+  
+                    sendSMS(phone, "Your gym session has ended. Thank you for visiting MyUWIGym!");
+                    console.log(`Admin notified: User ${userId} auto checked out.`);
+                  }
+                });
+              }
             });
+          }, 45 * 60 * 1000);
         });
+      });
     });
-});
+  });
 
-app.post("/check-out", authenticateToken, (req, res) => {
+  
+  app.post("/check-out", authenticateToken, (req, res) => {
     const userId = req.user.userId;
+  
     db.query("UPDATE gym_visits SET check_out = CURRENT_TIMESTAMP WHERE user_id = ? AND check_out IS NULL", [userId], (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (result.affectedRows === 0) return res.status(400).json({ message: "User is not checked in" });
-        res.json({ message: "Check-out successful" });
+      if (err) return res.status(500).json({ error: err.message });
+      if (result.affectedRows === 0) return res.status(400).json({ message: "User is not checked in" });
+  
+      // Emit to admin dashboard
+      db.query("SELECT full_name, role FROM users WHERE id = ?", [userId], (err, result) => {
+        if (!err && result.length > 0) {
+          const user = result[0];
+          io.emit("checkout", {
+            userId,
+            full_name: user.full_name,
+            role: user.role
+          });
+        }
+      });
+  
+      res.json({ message: "Check-out successful" });
     });
-});
+  });
+  
 
 app.get("/live-occupancy", (req, res) => {
     db.query("SELECT COUNT(*) AS occupancy FROM gym_visits WHERE check_out IS NULL", (err, result) => {

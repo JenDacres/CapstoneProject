@@ -91,6 +91,20 @@
     <tbody id="log-body"></tbody>
   </table>
 
+  <h2 style="margin-top: 40px;">🟢 Currently Checked-in Users</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Name</th>
+        <th>Role</th>
+        <th>Check-in Time</th>
+        <th>Duration</th>
+      </tr>
+    </thead>
+    <tbody id="current-users-body"></tbody>
+  </table>
+
   <audio id="sound-checkin" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
   <audio id="sound-checkout" src="https://www.soundjay.com/buttons/sounds/button-4.mp3"></audio>
 
@@ -99,13 +113,15 @@
     const logBody = document.getElementById("log-body");
     const occupancyEl = document.getElementById("occupancy-count");
     const occupancyNumber = document.getElementById("occupancy-number");
-
     const soundCheckIn = document.getElementById("sound-checkin");
     const soundCheckOut = document.getElementById("sound-checkout");
+    const currentUsersBody = document.getElementById("current-users-body");
 
     let currentCount = 0;
     let checkinCount = 0;
     let checkoutCount = 0;
+
+    const currentUsers = new Map(); // { userId => { name, role, checkInTime } }
 
     const activityChart = new Chart(document.getElementById("activityChart"), {
       type: "doughnut",
@@ -131,21 +147,6 @@
       activityChart.update();
     }
 
-    function addLog(userId, name, role, type) {
-      const row = document.createElement("tr");
-      const time = new Date().toLocaleTimeString();
-
-      row.innerHTML = `
-        <td>${userId}</td>
-        <td>${name}</td>
-        <td>${role}</td>
-        <td class="${type}">${type.toUpperCase()}</td>
-        <td>${time}</td>
-      `;
-
-      logBody.prepend(row);
-    }
-
     function updateOccupancyDisplay(count) {
       currentCount = count;
       occupancyNumber.textContent = count;
@@ -162,28 +163,79 @@
       }
     }
 
-    // Initial occupancy fetch
+    function addLog(userId, name, role, type) {
+      const row = document.createElement("tr");
+      const time = new Date().toLocaleTimeString();
+      row.innerHTML = `
+        <td>${userId}</td>
+        <td>${name}</td>
+        <td>${role}</td>
+        <td class="${type}">${type.toUpperCase()}</td>
+        <td>${time}</td>
+      `;
+      logBody.prepend(row);
+    }
+
+    function updateCurrentUsersTable() {
+      currentUsersBody.innerHTML = "";
+
+      currentUsers.forEach((user, id) => {
+        const row = document.createElement("tr");
+        const duration = formatDuration(Date.now() - user.checkInTime);
+        row.innerHTML = `
+          <td>${id}</td>
+          <td>${user.name}</td>
+          <td>${user.role}</td>
+          <td>${new Date(user.checkInTime).toLocaleTimeString()}</td>
+          <td>${duration}</td>
+        `;
+        currentUsersBody.appendChild(row);
+      });
+    }
+
+    function formatDuration(ms) {
+      const totalSec = Math.floor(ms / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      return `${min}m ${sec}s`;
+    }
+
+    // Refresh occupancy count
     fetch("http://localhost:5000/live-occupancy")
       .then(res => res.json())
       .then(data => updateOccupancyDisplay(data.occupancy));
 
-    // Handle checkin event
+    // Handle real-time checkin
     socket.on("checkin", (data) => {
+      const time = Date.now();
       addLog(data.userId, data.full_name || "Unknown", data.role || "Member", "checkin");
+      currentUsers.set(data.userId, {
+        name: data.full_name || "Unknown",
+        role: data.role || "Member",
+        checkInTime: time
+      });
       updateOccupancyDisplay(currentCount + 1);
+      updateCurrentUsersTable();
       soundCheckIn.play();
       checkinCount++;
       updateChart();
     });
 
-    // Handle checkout event
+    // Handle real-time checkout
     socket.on("checkout", (data) => {
       addLog(data.userId, data.full_name || "Unknown", data.role || "Member", "checkout");
+      currentUsers.delete(data.userId);
       updateOccupancyDisplay(Math.max(0, currentCount - 1));
+      updateCurrentUsersTable();
       soundCheckOut.play();
       checkoutCount++;
       updateChart();
     });
+
+    // Update durations every second
+    setInterval(() => {
+      updateCurrentUsersTable();
+    }, 1000);
   </script>
 </body>
 </html>
