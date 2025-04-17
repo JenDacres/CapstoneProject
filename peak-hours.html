@@ -1,51 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>MyUWIGym | Peak Hours</title>
+  <meta charset="UTF-8" />
+  <title>MyUWIGym | Peak Hours Prediction</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
       background: #f4f4f4;
+      padding: 20px;
+      text-align: center;
     }
     canvas {
-      max-width: 700px;
-      margin: 40px auto;
+      max-width: 800px;
+      margin: 30px auto;
+    }
+    h1 {
+      color: #333;
     }
   </style>
 </head>
 <body>
-  <h1>📈 Peak Hours (Last 7 Days)</h1>
+  <h1>📈 Predicted Peak Hours (Next Week)</h1>
+  <p>Based on the last 30 days of check-ins</p>
   <canvas id="peakChart"></canvas>
 
   <script>
-    fetch("http://localhost:5000/predict-peak-hours")
+    // Fetch from your Python API
+    fetch("http://localhost:5001/api/predict-peak-hours")
       .then(res => res.json())
-      .then(json => {
-        const labels = Array.from({length: 24}, (_, i) => `${i}:00`);
-        const data = {
-          labels: labels,
-          datasets: [{
-            label: "Check-ins",
-            data: json.data,
-            backgroundColor: "#4caf50"
-          }]
-        };
+      .then(predictions => {
+        // Group data by day
+        const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        const hourlyData = Array(7).fill().map(() => Array(24).fill(0));
+
+        predictions.forEach(p => {
+          hourlyData[p.day][p.hour] = p.predicted_checkins;
+        });
+
+        const datasets = hourlyData.map((data, i) => ({
+          label: weekdays[i],
+          data,
+          fill: false,
+          borderColor: `hsl(${i * 50}, 80%, 50%)`,
+          tension: 0.3
+        }));
 
         new Chart(document.getElementById("peakChart"), {
-          type: "bar",
-          data: data,
+          type: "line",
+          data: {
+            labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+            datasets: datasets
+          },
           options: {
+            responsive: true,
+            plugins: {
+              title: {
+                display: true,
+                text: "Predicted Check-ins Per Hour (by Day)"
+              },
+              legend: {
+                position: "bottom"
+              }
+            },
             scales: {
               y: {
                 beginAtZero: true,
-                title: { display: true, text: 'Visits' }
+                title: {
+                  display: true,
+                  text: "Predicted Check-ins"
+                }
               },
               x: {
-                title: { display: true, text: 'Hour of Day' }
+                title: {
+                  display: true,
+                  text: "Hour of Day"
+                }
               }
             }
           }
