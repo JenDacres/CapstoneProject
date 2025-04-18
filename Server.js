@@ -3,6 +3,9 @@ const mysql = require("mysql");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const twilio = require("twilio");
+const jwt = require("jsonwebtoken");
+const http = require("http");
+const { Server } = require("socket.io");
 require("dotenv").config({ path: "myuwigym.env" });
 
 const app = express();
@@ -41,6 +44,37 @@ function generateUserId(role, id) {
     else if (role === "Administrator") prefix = "A-";
     return `${prefix}${id.toString().padStart(4, '0')}`;
 }
+
+
+
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+
+  const sql = "SELECT * FROM users WHERE email = ?";
+  db.query(sql, [email], (err, results) => {
+    if (err) return res.status(500).json({ message: "Server error" });
+
+    if (results.length === 0) {
+      return res.status(401).json({ message: "Incorrect email or password" });
+    }
+
+    const user = results[0];
+
+    bcrypt.compare(password, user.password_hash, (err, match) => {
+      if (err) return res.status(500).json({ message: "Authentication failed" });
+
+      if (!match) {
+        return res.status(401).json({ message: "Incorrect email or password" });
+      }
+
+      // Optional: generate JWT token for future authentication
+      const token = jwt.sign({ userId: user.id, role: user.role }, "secretkey");
+
+      res.json({ message: "Login successful", token });
+    });
+  });
+});
+
 
 app.post("/register", (req, res) => {
     const { full_name, email, role, area_code, phone, password } = req.body;
