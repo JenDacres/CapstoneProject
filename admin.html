@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gym Admin Portal</title>
+  <link rel="stylesheet" href="admin.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body onload="loadAdminPage('dashboard')">
+  <div class="container">
+    <header>
+      <h1>My UWI Gym Admin Dashboard</h1>
+    </header>
+    <main id="adminMainContent">
+      <!-- Admin content gets injected here -->
+    </main>
+  </div>
+
+  <script>function loadAdminPage(pageId) {
+    let content = '';
+  
+    switch (pageId) {
+      case 'dashboard':
+        content = `
+          <div class="button-container">
+            <button onclick="loadAdminPage('sendAlerts')">Send Alerts</button>
+            <button onclick="loadAdminPage('viewReports')">View Reports</button>
+            <button onclick="loadAdminPage('manageBookings')">Manage Bookings</button>
+            <button onclick="loadAdminPage('liveOccupancy')">Live Occupancy</button>
+            <button onclick="loadAdminPage('approveAccounts')">Approve Accounts</button>
+          </div>
+        `;
+        break;
+  
+      case 'sendAlerts':
+        content = `
+          <h2>Send Alert</h2>
+          <p>Send urgent messages to all members.</p>
+          <textarea id="alertText" placeholder="Type your alert message..."></textarea>
+          <div class="button-container">
+            <button onclick="sendAlert()">Send Alert</button>
+            <button onclick="loadAdminPage('dashboard')">← Back</button>
+          </div>
+        `;
+        break;
+  
+      case 'viewReports':
+        content = `
+          <h2>View Reports</h2>
+          <p>View user-submitted reports of broken equipment or issues.</p>
+          <ul>
+            <li>Report #1 - Treadmill belt broken</li>
+            <li>Report #2 - AC not working in main area</li>
+          </ul>
+          <button onclick="loadAdminPage('dashboard')">← Back</button>
+        `;
+        break;
+  
+      case 'manageBookings':
+        content = `
+          <h2>Manage Bookings</h2>
+          <p>Modify, cancel, or view all user bookings.</p>
+          <button onclick="loadAdminPage('dashboard')">← Back</button>
+        `;
+        break;
+  
+      case 'liveOccupancy':
+        content = `
+          <h2>Live Occupancy</h2>
+          <p>Current users in gym: 24 / 50</p>
+          <button onclick="loadAdminPage('dashboard')">← Back</button>
+        `;
+        break;
+  
+      case 'approveAccounts':
+        content = `
+          <h2>Approve Accounts</h2>
+          <p>Pending requests:</p>
+          <ul>
+            <li>John Doe - <button>Approve</button> <button>Reject</button></li>
+            <li>Jane Smith - <button>Approve</button> <button>Reject</button></li>
+          </ul>
+          <button onclick="loadAdminPage('dashboard')">← Back</button>
+        `;
+        break;
+    }
+  
+    document.getElementById('adminMainContent').innerHTML = content;
+  }
+  
+  function sendAlert() {
+    const alertText = document.getElementById('alertText').value;
+    if (alertText.trim() === '') {
+      alert('Please enter a message to send.');
+    } else {
+      alert('Alert sent to all members!');
+      loadAdminPage('dashboard');
+    }
+  }
+  </script>
+</body>
+</html>
