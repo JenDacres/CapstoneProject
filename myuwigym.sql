@@ -31,3 +31,14 @@ CREATE TABLE occupancy (
     occupancy_count INT DEFAULT 0,
     UNIQUE(date, time_slot)  -- Prevents duplicate entries
 );
+
+
+CREATE TABLE trainer_requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  trainer_id INT NOT NULL,
+  user_id INT NOT NULL,
+  request_detail TEXT,
+  status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
+  FOREIGN KEY (trainer_id) REFERENCES users(id),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);

@@ -80,6 +80,52 @@ app.post("/login", (req, res) => {
   });
 });
 
+// Get trainer-specific client requests
+app.get("/trainer-requests/:trainerId", (req, res) => {
+    const { trainerId } = req.params;
+  
+    const sql = `
+      SELECT r.id, u.full_name, r.request_detail
+      FROM trainer_requests r
+      JOIN users u ON r.user_id = u.id
+      WHERE r.trainer_id = ? AND r.status = 'Pending'
+    `;
+  
+    db.query(sql, [trainerId], (err, results) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(results);
+    });
+  });
+  
+  // Respond to client request
+  app.post("/respond-request", (req, res) => {
+    const { id, approved } = req.body;
+    const status = approved ? "Approved" : "Rejected";
+  
+    db.query("UPDATE trainer_requests SET status = ? WHERE id = ?", [status, id], (err) => {
+      if (err) return res.status(500).json({ message: "Failed to update request" });
+      res.json({ message: `Request ${status.toLowerCase()} successfully.` });
+    });
+  });
+  
+  // Get upcoming clients for trainer
+  app.get("/trainer-upcoming-clients/:trainerId", (req, res) => {
+    const { trainerId } = req.params;
+  
+    const sql = `
+      SELECT b.date, b.time_slot, u.full_name
+      FROM bookings b
+      JOIN users u ON b.user_id = u.id
+      WHERE b.trainer_id = ? AND b.date >= CURDATE()
+      ORDER BY b.date, b.time_slot
+    `;
+  
+    db.query(sql, [trainerId], (err, results) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(results);
+    });
+  });
+  
 
 app.post("/register", (req, res) => {
     const { full_name, email, role, area_code, phone, password } = req.body;
