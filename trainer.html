@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,18 +10,34 @@
   <div class="trainer-container">
     <a href="HomePage.html" class="back-arrow" title="Back to Home">&#8592;</a>
     <h2>Trainer Dashboard</h2>
+
     <div class="button-container">
       <button onclick="loadTrainerPage('requests')">Requests</button>
       <button onclick="loadTrainerPage('clients')">Upcoming Clients</button>
-      <button onclick="loadTrainerPage('occupancy')">Live Occupancy</button>
+       <button onclick="window.location.href='liveoccupancy.html'">Live Occupancy</button>
+
     </div>
+
     <div id="trainerContent"></div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
   </div>
+
   <script>
     const trainerId = localStorage.getItem("user_id");
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 3000);
+    }
+
     function loadTrainerPage(section) {
       const contentDiv = document.getElementById("trainerContent");
       contentDiv.innerHTML = "<p>Loading...</p>";
+
       if (section === "requests") {
         fetch(`http://localhost:5000/trainer-requests/${trainerId}`)
           .then(res => res.json())
@@ -31,14 +46,23 @@
               contentDiv.innerHTML = "<p>No pending requests.</p>";
               return;
             }
-            const listItems = data.map(
-              req => '<li>' + req.full_name + ': ' + req.request_detail + '<br/>' +
-                '<button onclick="respondRequest(' + req.id + ', true)">Approve</button>' +
-                '<button onclick="respondRequest(' + req.id + ', false)">Reject</button></li>'
-            ).join("");
-            contentDiv.innerHTML = '<h3>Client Requests</h3><ul>' + listItems + '</ul>';
+
+            const listItems = data.map(req => `
+              <li>
+                <strong>${req.full_name}</strong><br/>
+                📅 <strong>${req.date}</strong> | 🕒 <strong>${req.time_slot}</strong><br/>
+                ${req.request_detail ? `<em>${req.request_detail}</em><br/>` : ""}
+                <div style="margin-top: 10px;">
+                  <button onclick="respondRequest(${req.id}, true)">✅ Accept</button>
+                  <button onclick="respondRequest(${req.id}, false)">❌ Deny</button>
+                </div>
+              </li>
+            `).join("");
+
+            contentDiv.innerHTML = `<h3>Client Requests</h3><ul>${listItems}</ul>`;
           });
       }
+
       if (section === "clients") {
         fetch(`http://localhost:5000/trainer-upcoming-clients/${trainerId}`)
           .then(res => res.json())
@@ -47,12 +71,15 @@
               contentDiv.innerHTML = "<p>No upcoming sessions.</p>";
               return;
             }
+
             const listItems = data.map(
-              booking => `<li>${booking.date} - ${booking.full_name} at ${booking.time_slot}</li>`
+              booking => `<li><strong>${booking.full_name}</strong><br/>📅 ${booking.date} at 🕒 ${booking.time_slot}</li>`
             ).join("");
+
             contentDiv.innerHTML = `<h3>Upcoming Clients</h3><ul>${listItems}</ul>`;
           });
       }
+
       if (section === "occupancy") {
         fetch("http://localhost:5000/live-occupancy")
           .then(res => res.json())
@@ -61,18 +88,21 @@
           });
       }
     }
+
     function respondRequest(id, approved) {
-      fetch(`http://localhost:5000/respond-request`, {
+      fetch("http://localhost:5000/respond-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, approved })
       })
       .then(res => res.json())
       .then(data => {
-        alert(data.message);
-        loadTrainerPage('requests');
+        showToast(data.message);
+        loadTrainerPage("requests");
       });
     }
+
+    loadTrainerPage("requests"); // default load
   </script>
 </body>
 </html>

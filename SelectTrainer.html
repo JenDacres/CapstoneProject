@@ -27,5 +27,41 @@
             <button class="action-btn">Skip</button>
         </div>
         
+        <script>
+            async function loadTrainers() {
+              try {
+                const res = await fetch("http://localhost:5000/trainers");
+                const trainers = await res.json();
+                const container = document.getElementById("trainer-list");
+          
+                container.innerHTML = "";
+          
+                trainers.forEach(trainer => {
+                  const wrapper = document.createElement("div");
+                  wrapper.className = "trainer-profile";
+          
+                  wrapper.innerHTML = `
+                    <div class="trainer-image">
+                      <img src="${trainer.profile_image}" alt="${trainer.full_name}" />
+                    </div>
+                    <button class="trainer-btn" onclick="selectTrainer('${trainer.user_id}')">${trainer.full_name}</button>
+                  `;
+          
+                  container.appendChild(wrapper);
+                });
+              } catch (err) {
+                console.error("Error loading trainers:", err);
+              }
+            }
+          
+            function selectTrainer(trainerId) {
+              // Save trainerId or attach it to booking
+              console.log("Selected Trainer:", trainerId);
+              // You can also store it in localStorage or pass to another page
+            }
+          
+            loadTrainers();
+          </script>
+          
     </div>
 </body>

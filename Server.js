@@ -145,13 +145,21 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/book-slot", authenticateToken, (req, res) => {
-    const { date, time_slot } = req.body;
+    const { date, time_slot, trainer_id } = req.body;
     const userId = req.user.userId;
-    db.query("INSERT INTO bookings (user_id, date, time_slot) VALUES (?, ?, ?)", [userId, date, time_slot], (err, result) => {
-        if (err) return res.status(500).send(err);
-        res.status(201).send("Booking successful");
+
+    const sql = `
+        INSERT INTO bookings (user_id, trainer_id, date, time_slot)
+        VALUES (?, ?, ?, ?)`;
+
+    db.query(sql, [userId, trainer_id, date, time_slot], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        const bookingId = result.insertId;
+        res.status(201).json({ message: "Booking successful", bookingId });
     });
 });
+
 
 app.get("/my-bookings", authenticateToken, (req, res) => {
     const userId = req.user.userId;
@@ -262,6 +270,73 @@ app.get("/live-occupancy", (req, res) => {
         res.json({ occupancy: currentOccupancy, remaining: remainingSpots > 0 ? remainingSpots : 0 });
     });
 });
+
+app.get("/trainers", (req, res) => {
+    const sql = "SELECT user_id, full_name, profile_image FROM users WHERE role = 'Trainer'";
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
+app.post("/request-trainer", (req, res) => {
+    const { bookingId, trainerId } = req.body;
+  
+    const sql = `
+      INSERT INTO trainer_requests (booking_id, trainer_id)
+      VALUES (?, ?)`;
+  
+    db.query(sql, [bookingId, trainerId], (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ message: "Trainer request submitted!" });
+    });
+  });
+  
+  app.get("/trainer-requests/:trainerId", (req, res) => {
+    const { trainerId } = req.params;
+    const sql = `
+      SELECT tr.id, b.date, b.time_slot, u.full_name, tr.request_detail
+      FROM trainer_requests tr
+      JOIN bookings b ON tr.booking_id = b.id
+      JOIN users u ON b.user_id = u.user_id
+      WHERE tr.trainer_id = ? AND tr.status = 'Pending'
+    `;
+    db.query(sql, [trainerId], (err, results) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(results);
+    });
+  });
+  
+  
+  app.post("/respond-trainer-request", (req, res) => {
+    const { requestId, response } = req.body;
+  
+    if (!['Accepted', 'Denied'].includes(response)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+  
+    db.query("UPDATE trainer_requests SET status = ? WHERE id = ?", [response, requestId], (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ message: `Request ${response.toLowerCase()}` });
+    });
+ });
+
+ app.get("/trainer-upcoming-clients/:trainerId", (req, res) => {
+    const trainerId = req.params.trainerId;
+    const sql = `
+      SELECT b.date, b.time_slot, u.full_name
+      FROM trainer_requests tr
+      JOIN bookings b ON tr.booking_id = b.id
+      JOIN users u ON b.user_id = u.user_id
+      WHERE tr.trainer_id = ? AND tr.status = 'Accepted'
+      ORDER BY b.date, b.time_slot
+    `;
+    db.query(sql, [trainerId], (err, results) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(results);
+    });
+  });
+  
 
 const server = http.createServer(app);
 const io = new Server(server, {

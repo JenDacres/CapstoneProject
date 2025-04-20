@@ -35,10 +35,20 @@ CREATE TABLE occupancy (
 
 CREATE TABLE trainer_requests (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  trainer_id INT NOT NULL,
-  user_id INT NOT NULL,
-  request_detail TEXT,
-  status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
-  FOREIGN KEY (trainer_id) REFERENCES users(id),
-  FOREIGN KEY (user_id) REFERENCES users(id)
+  booking_id INT NOT NULL,
+  trainer_id VARCHAR(20) NOT NULL,
+  status ENUM('Pending', 'Accepted', 'Denied') DEFAULT 'Pending',
+  requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
+  FOREIGN KEY (trainer_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+CREATE TABLE trainer_availability (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  trainer_id VARCHAR(20),
+  day_of_week VARCHAR(10),  -- e.g. Monday, Tuesday
+  time_slot VARCHAR(20),     -- e.g. 09:00 - 10:00
+  available BOOLEAN DEFAULT TRUE,
+  FOREIGN KEY (trainer_id) REFERENCES users(user_id)
+);
+
