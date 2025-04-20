@@ -5,9 +5,8 @@
   }
   
   body {
-    font-family: 'Poppins', sans-serif;
-    background: linear-gradient(to right, #e3f2fd, #ffffff);
-    color: #333;
+    font-family: 'Arial', sans-serif;
+    background-color: #fff;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -15,42 +14,50 @@
   }
   
   .container {
-    width: 100%;
-    max-width: 800px;
-    padding: 40px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
+    width: 300px;
+    padding: 30px 20px;
+    border-radius: 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    position: relative;
+    text-align: center;
   }
   
   header h1 {
-    text-align: center;
-    font-weight: 600;
-    color: #1565c0;
-    margin-bottom: 30px;
+    font-size: 28px;
+    margin: 40px 0 20px;
+    line-height: 1.2;
+    font-weight: bold;
+  }
+  
+  h2 {
+    color: #333;
+    font-size: 20px;
+    margin-bottom: 20px;
+    font-weight: bold;
   }
   
   button {
     width: 100%;
-    padding: 15px;
+    padding: 12px;
     margin: 10px 0;
-    font-size: 18px;
-    background-color: #1565c0;
+    font-size: 16px;
+    background-color: black;
     color: white;
     border: none;
-    border-radius: 8px;
-    transition: background-color 0.3s ease;
+    border-radius: 20px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
   }
   
   button:hover {
-    background-color: #1976d2;
+    background-color: #333;
   }
   
   .button-container {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    margin-bottom: 20px;
   }
   
   textarea {
@@ -58,7 +65,7 @@
     height: 150px;
     padding: 12px;
     border: 1px solid #ccc;
-    border-radius: 8px;
+    border-radius: 20px;
     font-size: 16px;
     resize: none;
     margin-bottom: 20px;
@@ -66,5 +73,20 @@
   
   textarea::placeholder {
     color: #aaa;
+  }
+  
+  ul {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 10px;
+    text-align: left;
+  }
+  
+  ul li {
+    background-color: #e0e0e0;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 20px;
+    font-size: 14px;
   }
   

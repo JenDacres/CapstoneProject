@@ -70,7 +70,12 @@ app.post("/login", (req, res) => {
       // Optional: generate JWT token for future authentication
       const token = jwt.sign({ userId: user.id, role: user.role }, "secretkey");
 
-      res.json({ message: "Login successful", token });
+      res.json({
+        message: "Login successful",
+        role: user.role, // ← send back the role
+        user_id: user.user_id // optional, useful later
+      });
+      
     });
   });
 });

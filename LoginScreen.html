@@ -1,40 +1,61 @@
-<div class="login-container">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MYUWIGYM | Login</title>
+  <link rel="stylesheet" href="LoginScreen.css" />
+</head>
+<body>
+  <div class="login-container">
     <h2>Login</h2>
-  
-    <!-- Error Message Display -->
+    <button class="back-button" onclick="window.history.back()">←</button>
+
+
     <div id="error-message" class="error-message" style="display: none;"></div>
-  
+
     <form id="login-form">
       <label for="email">Email Address</label>
       <input type="email" id="email" name="email" required />
-  
+
       <label for="password">Password</label>
       <input type="password" id="password" name="password" required />
-  
-      <button type="submit" class="btn btn-login">Login</button>
+
+      <button type="submit" class="btn">Login</button>
     </form>
-  
+
     <p>Not registered? <a href="register.html">Click here to register</a></p>
   </div>
-  
+
   <script>
     document.getElementById("login-form").addEventListener("submit", async (e) => {
       e.preventDefault();
-  
+
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
-  
+
       const response = await fetch("http://localhost:5000/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
       });
-  
+
       const data = await response.json();
-  
+
       if (response.ok) {
-        // Redirect to dashboard or specific role screen
-        window.location.href = "dashboard.html";
+        switch (data.role) {
+          case "Member":
+            window.location.href = "member.html";
+            break;
+          case "Trainer":
+            window.location.href = "trainer.html";
+            break;
+          case "Administrator":
+            window.location.href = "admin.html";
+            break;
+          default:
+            alert("Unknown role");
+        }
       } else {
         const errorDiv = document.getElementById("error-message");
         errorDiv.style.display = "block";
@@ -42,4 +63,5 @@
       }
     });
   </script>
-  
+</body>
+</html>
