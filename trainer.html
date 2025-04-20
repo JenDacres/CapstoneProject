@@ -1,0 +1,78 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trainer Dashboard</title>
+  <link rel="stylesheet" href="trainer.css" />
+</head>
+<body>
+  <div class="trainer-container">
+    <a href="HomePage.html" class="back-arrow" title="Back to Home">&#8592;</a>
+    <h2>Trainer Dashboard</h2>
+    <div class="button-container">
+      <button onclick="loadTrainerPage('requests')">Requests</button>
+      <button onclick="loadTrainerPage('clients')">Upcoming Clients</button>
+      <button onclick="loadTrainerPage('occupancy')">Live Occupancy</button>
+    </div>
+    <div id="trainerContent"></div>
+  </div>
+  <script>
+    const trainerId = localStorage.getItem("user_id");
+    function loadTrainerPage(section) {
+      const contentDiv = document.getElementById("trainerContent");
+      contentDiv.innerHTML = "<p>Loading...</p>";
+      if (section === "requests") {
+        fetch(`http://localhost:5000/trainer-requests/${trainerId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.length === 0) {
+              contentDiv.innerHTML = "<p>No pending requests.</p>";
+              return;
+            }
+            const listItems = data.map(
+              req => '<li>' + req.full_name + ': ' + req.request_detail + '<br/>' +
+                '<button onclick="respondRequest(' + req.id + ', true)">Approve</button>' +
+                '<button onclick="respondRequest(' + req.id + ', false)">Reject</button></li>'
+            ).join("");
+            contentDiv.innerHTML = '<h3>Client Requests</h3><ul>' + listItems + '</ul>';
+          });
+      }
+      if (section === "clients") {
+        fetch(`http://localhost:5000/trainer-upcoming-clients/${trainerId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.length === 0) {
+              contentDiv.innerHTML = "<p>No upcoming sessions.</p>";
+              return;
+            }
+            const listItems = data.map(
+              booking => `<li>${booking.date} - ${booking.full_name} at ${booking.time_slot}</li>`
+            ).join("");
+            contentDiv.innerHTML = `<h3>Upcoming Clients</h3><ul>${listItems}</ul>`;
+          });
+      }
+      if (section === "occupancy") {
+        fetch("http://localhost:5000/live-occupancy")
+          .then(res => res.json())
+          .then(data => {
+            contentDiv.innerHTML = `<h3>Live Occupancy</h3><p>Currently: <strong>${data.occupancy}</strong> / 25</p>`;
+          });
+      }
+    }
+    function respondRequest(id, approved) {
+      fetch(`http://localhost:5000/respond-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, approved })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message);
+        loadTrainerPage('requests');
+      });
+    }
+  </script>
+</body>
+</html>
