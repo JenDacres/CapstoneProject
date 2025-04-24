@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Manage Competitions</title>
+  <link rel="stylesheet" href="admin.css" />
+  <style>
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .hidden {
+      display: none;
+    }
+    form input, form select, form button {
+      display: block;
+      margin: 10px 0;
+      width: 100%;
+      padding: 10px;
+    }
+    li {
+      background: #f5f5f5;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="admin.html" class="back-arrow" title="Back to Dashboard">&#8592;</a>
+
+    <h2>Competition Management</h2>
+
+    <!-- Toggle buttons -->
+    <div class="button-group">
+      <button onclick="showSection('create')">Create Competition</button>
+      <button onclick="showSection('view')">View Public Competitions</button>
+    </div>
+
+    <!-- Create competition section -->
+    <section id="createSection">
+      <form id="createCompetitionForm">
+        <input type="text" id="compName" placeholder="Competition Name" required />
+        <label>Start Date:</label>
+        <input type="date" id="startDate" required />
+        <label>End Date:</label>
+        <input type="date" id="endDate" required />
+        <button type="submit">Submit</button>
+      </form>
+    </section>
+
+    <!-- View public competitions -->
+    <section id="viewSection" class="hidden">
+      <h3>Public Competitions</h3>
+      <ul id="competitionList"></ul>
+    </section>
+  </div>
+
+  <script>
+    const createForm = document.getElementById("createCompetitionForm");
+    const list = document.getElementById("competitionList");
+
+    // Show only one section at a time
+    function showSection(section) {
+      document.getElementById("createSection").classList.add("hidden");
+      document.getElementById("viewSection").classList.add("hidden");
+
+      if (section === "create") {
+        document.getElementById("createSection").classList.remove("hidden");
+      } else if (section === "view") {
+        document.getElementById("viewSection").classList.remove("hidden");
+        loadPublicCompetitions(); // fetch only public ones
+      }
+    }
+
+    // Submit create competition
+    createForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const name = document.getElementById("compName").value;
+      const start_date = document.getElementById("startDate").value;
+      const end_date = document.getElementById("endDate").value;
+      const is_public = document.getElementById("visibility").value === "true";
+
+      fetch("http://localhost:5000/create-competition", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, start_date, end_date, is_public })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message);
+        this.reset();
+      });
+    });
+
+    // Load only public competitions
+    function loadPublicCompetitions() {
+      fetch("http://localhost:5000/competitions")
+        .then(res => res.json())
+        .then(data => {
+          const publicOnly = data.filter(comp => comp.is_public); // assumes boolean
+          list.innerHTML = "";
+
+          publicOnly.forEach(comp => {
+            const li = document.createElement("li");
+            li.innerHTML = `<strong>${comp.name}</strong><br><small>${comp.start_date} to ${comp.end_date}</small>`;
+            list.appendChild(li);
+          });
+        });
+    }
+
+    // Default to show create section
+    window.onload = () => showSection('create');
+  </script>
+</body>
+</html>

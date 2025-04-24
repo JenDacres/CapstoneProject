@@ -12,92 +12,129 @@
     <header>
       <h1>My UWI Gym Admin Dashboard</h1>
     </header>
-    <main id="adminMainContent">
-      <!-- Admin content gets injected here -->
-    </main>
+    <main id="adminMainContent"></main>
   </div>
 
-  <script>function loadAdminPage(pageId) {
-    let content = '';
-  
-    switch (pageId) {
-      case 'dashboard':
-        content = `
-          <div class="button-container">
-            <button onclick="loadAdminPage('sendAlerts')">Send Alerts</button>
-            <button onclick="loadAdminPage('viewReports')">View Reports</button>
-            <button onclick="loadAdminPage('manageBookings')">Manage Bookings</button>
-            <button onclick="window.location.href='liveoccupancy.html'">Live Occupancy</button>
-            <button onclick="loadAdminPage('approveAccounts')">Approve Accounts</button>
-          </div>
-        `;
-        break;
-  
-      case 'sendAlerts':
-        content = `
-          <h2>Send Alert</h2>
-          <p>Send urgent messages to all members.</p>
-          <textarea id="alertText" placeholder="Type your alert message..."></textarea>
-          <div class="button-container">
-            <button onclick="sendAlert()">Send Alert</button>
-            <button onclick="loadAdminPage('dashboard')">← Back</button>
-          </div>
-        `;
-        break;
-  
-      case 'viewReports':
-        content = `
-          <h2>View Reports</h2>
-          <p>View user-submitted reports of broken equipment or issues.</p>
-          <ul>
-            <li>Report #1 - Treadmill belt broken</li>
-            <li>Report #2 - AC not working in main area</li>
-          </ul>
-          <button onclick="loadAdminPage('dashboard')">← Back</button>
-        `;
-        break;
-  
-      case 'manageBookings':
-        content = `
-          <h2>Manage Bookings</h2>
-          <p>Modify, cancel, or view all user bookings.</p>
-          <button onclick="loadAdminPage('dashboard')">← Back</button>
-        `;
-        break;
-  
-      case 'liveOccupancy':
-        content = `
-          <h2>Live Occupancy</h2>
-          <p>Current users in gym: 24 / 50</p>
-          <button onclick="loadAdminPage('dashboard')">← Back</button>
-        `;
-        break;
-  
-      case 'approveAccounts':
-        content = `
-          <h2>Approve Accounts</h2>
-          <p>Pending requests:</p>
-          <ul>
-            <li>John Doe - <button>Approve</button> <button>Reject</button></li>
-            <li>Jane Smith - <button>Approve</button> <button>Reject</button></li>
-          </ul>
-          <button onclick="loadAdminPage('dashboard')">← Back</button>
-        `;
-        break;
+  <script>
+    function loadAdminPage(pageId) {
+      let content = '';
+
+      switch (pageId) {
+        case 'dashboard':
+          content = `
+            <div class="button-container">
+              <button onclick="loadAdminPage('sendAlerts')">Send Alerts</button>
+              <button onclick="loadAdminPage('viewReports')">View Reports</button>
+              <button onclick="loadAdminPage('manageBookings')">Manage Bookings</button>
+              <button onclick="window.location.href='competitions_admin.html'">Competitions</button>
+              <button onclick="window.location.href='liveoccupancy-a.html'">Live Occupancy</button>
+              <button onclick="loadAdminPage('approveAccounts')">Approve Accounts</button>
+            </div>
+          `;
+          document.getElementById('adminMainContent').innerHTML = content;
+          break;
+
+        case 'sendAlerts':
+          content = `
+            <h2>Send Alert</h2>
+            <p>Send urgent messages to all members.</p>
+            <textarea id="alertText" placeholder="Type your alert message..."></textarea>
+            <div class="button-container">
+              <button onclick="sendAlert()">Send Alert</button>
+              <button onclick="loadAdminPage('dashboard')">← Back</button>
+            </div>
+          `;
+          document.getElementById('adminMainContent').innerHTML = content;
+          break;
+
+        case 'viewReports':
+          fetch("http://localhost:5000/admin/reports")
+            .then(res => res.json())
+            .then(data => {
+              if (data.length === 0) {
+                content = `<p>No reports submitted yet.</p>`;
+              } else {
+                const listItems = data.map(r =>
+                  `<li><strong>${r.full_name}</strong>: ${r.message}<br><small>${new Date(r.created_at).toLocaleString()}</small></li>`
+                ).join("");
+                content = `
+                  <h2>View Reports</h2>
+                  <ul>${listItems}</ul>
+                  <button onclick="loadAdminPage('dashboard')">← Back</button>
+                `;
+              }
+              document.getElementById('adminMainContent').innerHTML = content;
+            });
+          break;
+
+        case 'manageBookings':
+          fetch("http://localhost:5000/admin/bookings")
+            .then(res => res.json())
+            .then(data => {
+              const listItems = data.map(b =>
+                `<li>${b.date} ${b.time_slot} - ${b.full_name} (${b.status})</li>`
+              ).join("");
+              content = `
+                <h2>Manage Bookings</h2>
+                <ul>${listItems}</ul>
+                <button onclick="loadAdminPage('dashboard')">← Back</button>
+              `;
+              document.getElementById('adminMainContent').innerHTML = content;
+            });
+          break;
+
+        case 'approveAccounts':
+          fetch("http://localhost:5000/admin/pending-users")
+            .then(res => res.json())
+            .then(data => {
+              const list = data.map(u =>
+                `<li>${u.full_name} (${u.role}) 
+                  <button onclick="respondToUser(${u.id}, true)">Approve</button> 
+                  <button onclick="respondToUser(${u.id}, false)">Reject</button>
+                </li>`
+              ).join("");
+              content = `
+                <h2>Approve Accounts</h2>
+                <ul>${list}</ul>
+                <button onclick="loadAdminPage('dashboard')">← Back</button>
+              `;
+              document.getElementById('adminMainContent').innerHTML = content;
+            });
+          break;
+      }
     }
-  
-    document.getElementById('adminMainContent').innerHTML = content;
-  }
-  
-  function sendAlert() {
-    const alertText = document.getElementById('alertText').value;
-    if (alertText.trim() === '') {
-      alert('Please enter a message to send.');
-    } else {
-      alert('Alert sent to all members!');
-      loadAdminPage('dashboard');
+
+    function sendAlert() {
+      const alertText = document.getElementById('alertText').value.trim();
+      if (!alertText) {
+        alert('Please enter a message to send.');
+        return;
+      }
+
+      fetch("http://localhost:5000/send-alert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: alertText })
+      })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message || "Alert sent!");
+          loadAdminPage('dashboard');
+        });
     }
-  }
+
+    function respondToUser(id, approve) {
+      fetch("http://localhost:5000/admin/approve-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, approve })
+      })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message);
+          loadAdminPage("approveAccounts");
+        });
+    }
   </script>
 </body>
 </html>

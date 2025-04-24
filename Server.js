@@ -271,6 +271,33 @@ app.get("/live-occupancy", (req, res) => {
     });
 });
 
+app.get("/live-occupancy-summary", (req, res) => {
+    const hours = [...Array(24).keys()].map(h => `${String(h).padStart(2, '0')}:00`);
+    db.query(`
+      SELECT 
+        HOUR(check_in) AS hour, 
+        COUNT(*) AS count 
+      FROM gym_visits 
+      WHERE DATE(check_in) = CURDATE() 
+      GROUP BY hour
+    `, (err, results) => {
+      if (err) return res.status(500).json({ error: err.message });
+  
+      const summary = hours.map(hourStr => {
+        const hour = parseInt(hourStr.split(':')[0]);
+        const match = results.find(r => r.hour === hour);
+        return { hour: hourStr, count: match ? match.count : 0 };
+      });
+  
+      // Also get current count
+      db.query("SELECT COUNT(*) AS current FROM gym_visits WHERE check_out IS NULL", (err2, result2) => {
+        if (err2) return res.status(500).json({ error: err2.message });
+        res.json({ current: result2[0].current, summary });
+      });
+    });
+  });
+  
+
 app.get("/trainers", (req, res) => {
     const sql = "SELECT user_id, full_name, profile_image FROM users WHERE role = 'Trainer'";
     db.query(sql, (err, results) => {

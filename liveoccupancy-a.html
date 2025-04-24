@@ -5,53 +5,81 @@
   <title>MyUWIGym | Admin Dashboard</title>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
+    * {
+      box-sizing: border-box;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f4f4f4;
+      padding: 30px 20px;
+      color: #333;
+    }
+
+    .back-button {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #333;
     }
 
     h1, h2 {
       text-align: center;
+      font-weight: 600;
+      margin-bottom: 20px;
     }
 
     #occupancy-count.full {
       color: red;
-      font-weight: bold;
     }
 
-    h2 span {
-      transition: all 0.3s ease;
+    .dashboard-section {
+      background-color: #fff;
+      border-radius: 16px;
+      padding: 25px;
+      margin: 20px auto;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      max-width: 1000px;
+      position: relative;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #fff;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
       margin-top: 20px;
     }
 
     th, td {
-      padding: 15px;
-      border-bottom: 1px solid #ddd;
+      padding: 12px 15px;
+      border-bottom: 1px solid #e0e0e0;
       text-align: center;
     }
 
     th {
-      background-color: #02080eac;
-      color: white;
+      background-color: #000;
+      color: #fff;
+      font-weight: 500;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
     }
 
     .checkin {
-      color: green;
+      color: #28a745;
       font-weight: bold;
     }
 
     .checkout {
-      color: red;
+      color: #e53935;
       font-weight: bold;
     }
 
@@ -65,45 +93,61 @@
     }
 
     #chart-container {
-      width: 300px;
-      margin: 30px auto;
+      width: 350px;
+      margin: 0 auto 40px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    audio {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <h1>Admin Dashboard - Live Check-in / Check-out</h1>
-  <h2 id="occupancy-count">🏋️ Current Occupancy: <span id="occupancy-number">0</span></h2>
+  <button class="back-button" onclick="window.location.href='admin.html'">←</button>
 
-  <div id="chart-container">
+  <div class="dashboard-section">
+    <h1>Admin Dashboard</h1>
+    <h2 id="occupancy-count">🏋️ Current Occupancy: <span id="occupancy-number">0</span></h2>
+  </div>
+
+  <div class="dashboard-section" id="chart-container">
     <canvas id="activityChart"></canvas>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>User ID</th>
-        <th>Name</th>
-        <th>Role</th>
-        <th>Event</th>
-        <th>Time</th>
-      </tr>
-    </thead>
-    <tbody id="log-body"></tbody>
-  </table>
+  <div class="dashboard-section">
+    <h2>🔁 Check-in / Check-out Logs</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Name</th>
+          <th>Event</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody id="log-body"></tbody>
+    </table>
+  </div>
 
-  <h2 style="margin-top: 40px;">🟢 Currently Checked-in Users</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>User ID</th>
-        <th>Name</th>
-        <th>Role</th>
-        <th>Check-in Time</th>
-        <th>Duration</th>
-      </tr>
-    </thead>
-    <tbody id="current-users-body"></tbody>
-  </table>
+  <div class="dashboard-section">
+    <h2>🟢 Currently Checked-in Users</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Name</th>
+          <th>Check-in Time</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody id="current-users-body"></tbody>
+    </table>
+  </div>
 
   <audio id="sound-checkin" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
   <audio id="sound-checkout" src="https://www.soundjay.com/buttons/sounds/button-4.mp3"></audio>
@@ -120,8 +164,7 @@
     let currentCount = 0;
     let checkinCount = 0;
     let checkoutCount = 0;
-
-    const currentUsers = new Map(); // { userId => { name, role, checkInTime } }
+    const currentUsers = new Map();
 
     const activityChart = new Chart(document.getElementById("activityChart"), {
       type: "doughnut",
@@ -129,15 +172,13 @@
         labels: ["Check-ins", "Check-outs"],
         datasets: [{
           data: [0, 0],
-          backgroundColor: ["#4caf50", "#f44336"],
+          backgroundColor: ["#4caf50", "#f44336"]
         }]
       },
       options: {
         responsive: true,
         plugins: {
-          legend: {
-            position: "bottom"
-          }
+          legend: { position: "bottom" }
         }
       }
     });
@@ -151,25 +192,19 @@
       currentCount = count;
       occupancyNumber.textContent = count;
       occupancyNumber.classList.add("flash");
-
       setTimeout(() => occupancyNumber.classList.remove("flash"), 300);
-
-      if (count >= 25) {
-        occupancyEl.classList.add("full");
-        occupancyEl.innerHTML = `🚫 Gym Full - Capacity Reached (<span id="occupancy-number" class="flash">${count}</span>)`;
-      } else {
-        occupancyEl.classList.remove("full");
-        occupancyEl.innerHTML = `🏋️ Current Occupancy: <span id="occupancy-number" class="flash">${count}</span>`;
-      }
+      occupancyEl.innerHTML = count >= 25
+        ? `🚫 Gym Full - Capacity Reached (<span id="occupancy-number" class="flash">${count}</span>)`
+        : `🏋️ Current Occupancy: <span id="occupancy-number" class="flash">${count}</span>`;
+      occupancyEl.classList.toggle("full", count >= 25);
     }
 
-    function addLog(userId, name, role, type) {
+    function addLog(userId, name, type) {
       const row = document.createElement("tr");
       const time = new Date().toLocaleTimeString();
       row.innerHTML = `
         <td>${userId}</td>
         <td>${name}</td>
-        <td>${role}</td>
         <td class="${type}">${type.toUpperCase()}</td>
         <td>${time}</td>
       `;
@@ -178,14 +213,12 @@
 
     function updateCurrentUsersTable() {
       currentUsersBody.innerHTML = "";
-
       currentUsers.forEach((user, id) => {
         const row = document.createElement("tr");
         const duration = formatDuration(Date.now() - user.checkInTime);
         row.innerHTML = `
           <td>${id}</td>
           <td>${user.name}</td>
-          <td>${user.role}</td>
           <td>${new Date(user.checkInTime).toLocaleTimeString()}</td>
           <td>${duration}</td>
         `;
@@ -200,18 +233,15 @@
       return `${min}m ${sec}s`;
     }
 
-    // Refresh occupancy count
     fetch("http://localhost:5000/live-occupancy")
       .then(res => res.json())
       .then(data => updateOccupancyDisplay(data.occupancy));
 
-    // Handle real-time checkin
     socket.on("checkin", (data) => {
       const time = Date.now();
-      addLog(data.userId, data.full_name || "Unknown", data.role || "Member", "checkin");
+      addLog(data.userId, data.full_name || "Unknown", "checkin");
       currentUsers.set(data.userId, {
         name: data.full_name || "Unknown",
-        role: data.role || "Member",
         checkInTime: time
       });
       updateOccupancyDisplay(currentCount + 1);
@@ -221,9 +251,8 @@
       updateChart();
     });
 
-    // Handle real-time checkout
     socket.on("checkout", (data) => {
-      addLog(data.userId, data.full_name || "Unknown", data.role || "Member", "checkout");
+      addLog(data.userId, data.full_name || "Unknown", "checkout");
       currentUsers.delete(data.userId);
       updateOccupancyDisplay(Math.max(0, currentCount - 1));
       updateCurrentUsersTable();
@@ -232,10 +261,7 @@
       updateChart();
     });
 
-    // Update durations every second
-    setInterval(() => {
-      updateCurrentUsersTable();
-    }, 1000);
+    setInterval(updateCurrentUsersTable, 1000);
   </script>
 </body>
 </html>
