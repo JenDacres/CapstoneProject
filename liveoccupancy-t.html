@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MyUWIGym | Admin Dashboard</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f4f4f4;
+      padding: 30px 20px;
+      color: #333;
+    }
+
+    .back-button {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    h1, h2 {
+      text-align: center;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    #occupancy-count.full {
+      color: red;
+    }
+
+    .dashboard-section {
+      background-color: #fff;
+      border-radius: 16px;
+      padding: 25px;
+      margin: 20px auto;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      max-width: 1000px;
+      position: relative;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #e0e0e0;
+      text-align: center;
+    }
+
+    th {
+      background-color: #000;
+      color: #fff;
+      font-weight: 500;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .checkin {
+      color: #28a745;
+      font-weight: bold;
+    }
+
+    .checkout {
+      color: #e53935;
+      font-weight: bold;
+    }
+
+    .flash {
+      animation: flash 0.4s ease-in-out;
+    }
+
+    @keyframes flash {
+      0% { transform: scale(1.2); color: #007bff; }
+      100% { transform: scale(1); }
+    }
+
+    #chart-container {
+      width: 350px;
+      margin: 0 auto 40px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    audio {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <button class="back-button" onclick="window.location.href='trainer.html'">←</button>
+
+  <div class="dashboard-section">
+    <h1>Trainer Dashboard</h1>
+    <h2 id="occupancy-count">🏋️ Current Occupancy: <span id="occupancy-number">0</span></h2>
+  </div>
+
+  <div class="dashboard-section" id="chart-container">
+    <canvas id="activityChart"></canvas>
+  </div>
+
+  <div class="dashboard-section">
+    <h2>🔁 Check-in / Check-out Logs</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Name</th>
+          <th>Event</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody id="log-body"></tbody>
+    </table>
+  </div>
+
+  <div class="dashboard-section">
+    <h2>🟢 Currently Checked-in Users</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Name</th>
+          <th>Check-in Time</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody id="current-users-body"></tbody>
+    </table>
+  </div>
+
+  <audio id="sound-checkin" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
+  <audio id="sound-checkout" src="https://www.soundjay.com/buttons/sounds/button-4.mp3"></audio>
+
+  <script>
+    const socket = io("http://localhost:5000");
+    const logBody = document.getElementById("log-body");
+    const occupancyEl = document.getElementById("occupancy-count");
+    const occupancyNumber = document.getElementById("occupancy-number");
+    const soundCheckIn = document.getElementById("sound-checkin");
+    const soundCheckOut = document.getElementById("sound-checkout");
+    const currentUsersBody = document.getElementById("current-users-body");
+
+    let currentCount = 0;
+    let checkinCount = 0;
+    let checkoutCount = 0;
+    const currentUsers = new Map();
+
+    const activityChart = new Chart(document.getElementById("activityChart"), {
+      type: "doughnut",
+      data: {
+        labels: ["Check-ins", "Check-outs"],
+        datasets: [{
+          data: [0, 0],
+          backgroundColor: ["#4caf50", "#f44336"]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: "bottom" }
+        }
+      }
+    });
+
+    function updateChart() {
+      activityChart.data.datasets[0].data = [checkinCount, checkoutCount];
+      activityChart.update();
+    }
+
+    function updateOccupancyDisplay(count) {
+      currentCount = count;
+      occupancyNumber.textContent = count;
+      occupancyNumber.classList.add("flash");
+      setTimeout(() => occupancyNumber.classList.remove("flash"), 300);
+      occupancyEl.innerHTML = count >= 25
+        ? `🚫 Gym Full - Capacity Reached (<span id="occupancy-number" class="flash">${count}</span>)`
+        : `🏋️ Current Occupancy: <span id="occupancy-number" class="flash">${count}</span>`;
+      occupancyEl.classList.toggle("full", count >= 25);
+    }
+
+    function addLog(userId, name, type) {
+      const row = document.createElement("tr");
+      const time = new Date().toLocaleTimeString();
+      row.innerHTML = `
+        <td>${userId}</td>
+        <td>${name}</td>
+        <td class="${type}">${type.toUpperCase()}</td>
+        <td>${time}</td>
+      `;
+      logBody.prepend(row);
+    }
+
+    function updateCurrentUsersTable() {
+      currentUsersBody.innerHTML = "";
+      currentUsers.forEach((user, id) => {
+        const row = document.createElement("tr");
+        const duration = formatDuration(Date.now() - user.checkInTime);
+        row.innerHTML = `
+          <td>${id}</td>
+          <td>${user.name}</td>
+          <td>${new Date(user.checkInTime).toLocaleTimeString()}</td>
+          <td>${duration}</td>
+        `;
+        currentUsersBody.appendChild(row);
+      });
+    }
+
+    function formatDuration(ms) {
+      const totalSec = Math.floor(ms / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      return `${min}m ${sec}s`;
+    }
+
+    fetch("http://localhost:5000/live-occupancy")
+      .then(res => res.json())
+      .then(data => updateOccupancyDisplay(data.occupancy));
+
+    socket.on("checkin", (data) => {
+      const time = Date.now();
+      addLog(data.userId, data.full_name || "Unknown", "checkin");
+      currentUsers.set(data.userId, {
+        name: data.full_name || "Unknown",
+        checkInTime: time
+      });
+      updateOccupancyDisplay(currentCount + 1);
+      updateCurrentUsersTable();
+      soundCheckIn.play();
+      checkinCount++;
+      updateChart();
+    });
+
+    socket.on("checkout", (data) => {
+      addLog(data.userId, data.full_name || "Unknown", "checkout");
+      currentUsers.delete(data.userId);
+      updateOccupancyDisplay(Math.max(0, currentCount - 1));
+      updateCurrentUsersTable();
+      soundCheckOut.play();
+      checkoutCount++;
+      updateChart();
+    });
+
+    setInterval(updateCurrentUsersTable, 1000);
+  </script>
+</body>
+</html>

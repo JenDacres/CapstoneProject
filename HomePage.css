@@ -1,50 +1,149 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #e0f7fa, #fce4ec);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  transition: background 0.4s, color 0.4s;
+}
+
+.theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+}
+
+.theme-toggle button {
+  font-size: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 .container {
-    text-align: center;
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  padding: 50px 30px;
+  border-radius: 30px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  width: 90%;
+  max-width: 360px;
+  transition: background-color 0.4s ease;
 }
 
-h1 {
+.hero-icon {
+    max-width: 100%;
+    height: auto;
+    width: 200px; /* or any size that fits your layout */
     margin-bottom: 20px;
+}  
+
+h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 10px;
+}
+
+p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 30px;
 }
 
 .buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .btn {
-    padding: 10px 20px;
-    font-size: 16px;
-    color: white;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: 0.3s;
-}
-
-.btn-login {
-    background-color: #02080eac;
+  padding: 14px;
+  font-size: 16px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
 }
 
 .btn-register {
-    background-color: #02080eac;
+  background-color: black;
+  color: white;
+}
+
+.btn-login {
+  background-color: #444;
+  color: white;
 }
 
 .btn:hover {
-    opacity: 0.8;
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+/* 🔥 Entrance Animation */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 🌚 Dark Mode */
+body.dark-mode {
+  background: linear-gradient(135deg, #0f0f0f, #2c2c2c);
+  color: #eee;
+}
+
+body.dark-mode .container {
+  background-color: #1e1e1e;
+}
+
+body.dark-mode h1 {
+  color: #fff;
+}
+
+body.dark-mode p {
+  color: #bbb;
+}
+
+body.dark-mode .btn-login {
+  background-color: #888;
+}
+
+body.dark-mode .btn-register {
+  background-color: #000;
+}
+
+/* 📱 Responsive Touchups */
+@media (max-width: 400px) {
+  .container {
+    padding: 40px 20px;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+
+  .hero-icon {
+    width: 60px;
+  }
+
+  .btn {
+    font-size: 14px;
+    padding: 12px;
+  }
 }

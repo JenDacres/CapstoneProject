@@ -1,18 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MYUWIGYM</title>
-    <link rel="stylesheet" href="HomePage.css"> <!--Link to external CSS-->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MYUWIGYM</title>
+  <link rel="stylesheet" href="HomePage.css" />
 </head>
 <body>
-    <div class="container">
-        <h1>Welcome to My UWI Gym</h1>
-        <p>Flex Your Time, Max Your Gains</p>
-        <div class="buttons">
-            <button class="btn btn-register" onclick="location.href='register.html'">Register</button>
-            <button class="btn btn-login" onclick="location.href='LoginScreen.html'">Login</button>
-        </div>
+  <div class="theme-toggle">
+    <button id="theme-btn">🌞 / 🌚</button>
+  </div>
+
+  <div class="container fade-in">
+    <img src="5074569.jpg" alt="Cartoon Gym Character" class="hero-icon" />
+    <h1>Welcome to My UWI Gym</h1>
+    <p>Flex Your Time, Max Your Gains</p>
+    <div class="buttons">
+      <button class="btn btn-register" onclick="location.href='register.html'">Register</button>
+      <button class="btn btn-login" onclick="location.href='LoginScreen.html'">Login</button>
     </div>
+  </div>
+
+  <script>
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const body = document.body;
+    const themeBtn = document.getElementById("theme-btn");
+
+    // Apply system preference on first load
+    if (prefersDark) {
+      body.classList.add('dark-mode');
+    }
+
+    // Toggle with button
+    themeBtn.addEventListener('click', () => {
+      body.classList.toggle('dark-mode');
+    });
+  </script>
 </body>
+</html>
