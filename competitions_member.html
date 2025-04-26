@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Competitions - MyUWIGym</title>
+  <link rel="stylesheet" href="competitions_member.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>🏆 MyUWIGym Competitions</h1>
+    
+    <div class="section">
+      <h2>Public Challenges</h2>
+      <ul id="public-challenges"></ul>
+    </div>
+
+    <div class="section">
+      <h2>My Private Challenges</h2>
+      <ul id="my-challenges"></ul>
+    </div>
+
+    <div class="section">
+      <h2>Create New Private Challenge</h2>
+      <form id="create-form">
+        <input type="text" id="title" placeholder="Challenge Title" required />
+        <textarea id="description" placeholder="Description"></textarea>
+        <input type="number" id="goal" placeholder="Goal (e.g., 100 pushups)" required />
+        <button type="submit">Create Challenge</button>
+      </form>
+    </div>
+
+    <div class="section">
+      <h2>🏅 Leaderboard</h2>
+      <select id="challenge-select">
+        <option value="">Select a Challenge</option>
+        <!-- Options populated via JS -->
+      </select>
+      <ul id="leaderboard"></ul>
+    </div>
+
+  </div>
+
+  <script>
+  
+document.addEventListener("DOMContentLoaded", () => {
+  fetch("http://localhost:5000/competitions")
+    .then(res => res.json())
+    .then(data => {
+      const list = document.getElementById("competitionList");
+      list.innerHTML = "";
+      data.forEach(comp => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <span><strong>${comp.name}</strong><br><small>${comp.start_date} to ${comp.end_date}</small></span>
+          <button onclick="joinCompetition(${comp.id})">Join</button>
+        `;
+        list.appendChild(li);
+      });
+    });
+
+  fetch("http://localhost:5000/competitions/all")
+    .then(res => res.json())
+    .then(challenges => {
+      const dropdown = document.getElementById("challenge-select");
+      challenges.forEach(c => {
+        const option = document.createElement("option");
+        option.value = c.id;
+        option.textContent = `${c.name} (${c.type})`;
+        dropdown.appendChild(option);
+      });
+    });
+
+  document.getElementById("challenge-select").addEventListener("change", (e) => {
+    const challengeId = e.target.value;
+    const leaderboard = document.getElementById("leaderboard");
+    if (!challengeId) return leaderboard.innerHTML = '';
+    fetch(`http://localhost:5000/competitions/${challengeId}/leaderboard`)
+      .then(res => res.json())
+      .then(data => {
+        leaderboard.innerHTML = data.length === 0
+          ? "<li>No progress yet.</li>"
+          : data.map((entry, i) =>
+              `<li><strong>#${i + 1}</strong> ${entry.full_name} - ${entry.progress}/${entry.goal}</li>`
+            ).join("");
+      });
+  });
+});
+
+function joinCompetition(id) {
+  const userId = localStorage.getItem("user_id");
+  if (!userId) return alert("Not logged in.");
+
+  fetch("http://localhost:5000/join-competition", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ competition_id: id, user_id: userId })
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message || "Joined!");
+      document.querySelector(".leaderboard-section").style.display = "block";
+    });
+}
+
+  </script>
+</body>
+</html>
