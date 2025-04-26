@@ -1,90 +1,270 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Member Homepage</title>
-        <link rel="stylesheet" href="member.css"> 
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyUWIGym | Member Dashboard</title>
 
-        <script>
-            // Function to load a new page view dynamically
-            function loadPage(pageId) {
-                let content = ''; // Initialize an empty string to store the page content
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!--<link rel="stylesheet" href="member-new.css">-->
+  <link rel="stylesheet" href="chatbox-new.css">
 
-                // Switch case to determine which page to load
-                switch (pageId) {
-                    case 'homepage': // Homepage view
-                        content = `
-                            <h1>Homepage</h1>
-                            <button onclick="loadPage('bookSlot')">Book Slot</button>
-                            <button onclick="loadPage('manageSlot')">Manage Slot</button>
-                            <button onclick="loadPage('cancelSlot')">Cancel Slot</button>
-                            <button onclick="window.location.href='liveoccupancy.html'">Live Occupancy</button>
-                            <button onclick="loadPage('createReport')">Create Report</button>
-                        `;
-                        break;
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding-bottom: 90px;
+      overflow-x: hidden;
+    }
 
-                    case 'bookSlot': // Book Slot page
-                        content = `
-                            <h1>Book a Slot</h1>
-                            <p>Select a time slot for your gym session.</p>
-                            <button onclick="loadPage('homepage')">Back to Homepage</button>
-                        `;
-                        break;
+    .container {
+      max-width: 400px;
+      margin: 20px auto 0;
+      padding: 20px;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      text-align: center;
+      position: relative;
+    }
 
-                    case 'manageSlot': // Manage Slot page
-                        content = `
-                            <h1>Manage Your Slot</h1>
-                            <p>Modify your existing booking.</p>
-                            <button onclick="loadPage('homepage')">Back to Homepage</button>
-                        `;
-                        break;
+    .profile-pic {
+      width: 70px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin-bottom: 10px;
+    }
 
-                    case 'cancelSlot': // Cancel Slot page
-                        content = `
-                            <h1>Cancel a Slot</h1>
-                            <p>Cancel an already booked gym slot.</p>
-                            <button onclick="loadPage('homepage')">Back to Homepage</button>
-                        `;
-                        break;
+    .plan-box, .activity-box {
+      background: #f0f4f8;
+      margin: 15px 0;
+      padding: 15px;
+      border-radius: 15px;
+      text-align: left;
+    }
 
-                    case 'liveOccupancy': // Live Occupancy page
-                        content = `
-                            <button onclick="loadPage('homepage')">Back to Homepage</button>
-                        `;
-                        break;
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background: #fff;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      box-shadow: 0 -3px 10px rgba(0,0,0,0.1);
+    }
 
-                    case 'createReport': // Create Report page
-                        content = `
-                            <h1>Create a Report</h1>
-                            <p>If you notice any broken equipment or unusual activity in the gym, please report it here. Your help keeps the gym safe and functional!</p>
-                            <textarea id="reportText" rows="20" cols="70" placeholder="Type your report here..."></textarea>
-                            <br>
-                            <div class="button-container">
-                                <button onclick="submitReport()">Submit Report</button>
-                                <button onclick="loadPage('homepage')">Back to Homepage</button>
-                            </div>
-                        `;
-                        break;
-                }
+    .bottom-nav button {
+      background: none;
+      border: none;
+      font-size: 22px;
+      color: #333;
+      cursor: pointer;
+    }
 
-                // Replace the entire content inside the <body> with the selected page's content
-                document.body.innerHTML = content;
-            }
+    .bottom-nav button:hover {
+      color: #d32f2f;
+    }
 
-            // Function to handle report submission
-            function submitReport() {
-                const reportText = document.getElementById('reportText').value;
-                if (reportText.trim() === '') {
-                    alert('Please type a report before submitting.');
-                } else {
-                    alert('Report submitted successfully!');
-                }
-            }
-        </script>
-    </head>
+    .add-button {
+      background-color: #e53935;
+      color: white;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: none;
+      font-size: 28px;
+      margin-top: -30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+    }
 
-    <body 
-        onload="loadPage('homepage')"> <!-- Load the homepage by default when the page loads -->
-    </body>
+    @media (max-width: 450px) {
+      .container {
+        margin: 10px;
+      }
+    }
+
+  /* Floating + Button */
+  .floating-plus {
+    position: fixed;
+    bottom: 75px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999;
+  }
+
+  .add-button {
+    background-color: #e53935;
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    font-size: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+    cursor: pointer;
+  }
+
+  /* Chat Toggle Button */
+  .chat-toggle {
+    position: fixed;
+    bottom: 140px;
+    right: 20px;
+    background-color: #333;
+    color: white;
+    border: none;
+    font-size: 20px;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    z-index: 999;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+
+  /* Chatbox itself */
+  .chatbox {
+    position: fixed;
+    bottom: 200px;
+    right: 20px;
+    width: 300px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    overflow: hidden;
+    display: none;
+    z-index: 999;
+  }
+
+  .chatbox-header {
+    background: black;
+    color: white;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .chatbox-messages {
+    padding: 10px;
+    height: 200px;
+    overflow-y: auto;
+  }
+
+  .chatbox-input {
+    display: flex;
+    padding: 10px;
+    gap: 5px;
+  }
+
+  .chatbox-input input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+
+  .chatbox-input button {
+    padding: 8px 12px;
+    background: black;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+  </style>
+</head>
+
+<body onload="loadPage('homepage')">
+
+  <div class="container" id="main-content">
+    <!-- Dynamic content will load here -->
+  </div>
+
+  <!-- Floating Red Button -->
+  <!--<div class="floating-plus">
+    <button id="bookBtn" class="add-button"><i class="fas fa-plus"></i></button>
+  </div> -->
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button id="homeBtn" title="Home"><i class="fas fa-home"></i></button>
+    <button id="manageBtn" title="Manage"><i class="fas fa-calendar-alt"></i></button>
+    <button id="bookBtn" class="add-button"><i class="fas fa-plus"></i></button>
+    <button id="messagesBtn" title="Messages"><i class="fas fa-comment-dots"></i></button>
+    <button id="settingsBtn" title="Settings"><i class="fas fa-cog"></i></button>
+  </nav>
+
+  <!-- Chatbox toggle -->
+  <button class="chat-toggle" onclick="toggleChat()">💬</button>
+  <div class="chatbox" style="display: none;">
+    <div class="chatbox-header">
+      MyUWIGym Assistant
+      <button onclick="toggleChat()">❌</button>
+    </div>
+    <div class="chatbox-messages"></div>
+    <div class="chatbox-input">
+      <input type="text" placeholder="Ask something..." id="userInput" />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script src="chatbox.js" defer></script>
+
+  <script>
+    function loadPage(pageId) {
+      let userName = localStorage.getItem("full_name") || "Loading";
+      let content = '';
+
+      if (pageId === 'homepage') {
+        content = `
+          <img src="profile-placeholder.png" class="profile-pic" alt="Profile Picture">
+          <h1>Welcome, ${userName}...!</h1>
+
+          <div class="plan-box">
+            <strong>🏋‍♂ My Plan for Today</strong><br>
+            <span id="occupancyText">Loading current occupancy...</span>
+          </div>
+
+          <div class="activity-box">
+            <strong>📅 Today’s Activity</strong><br>
+            <span id="activityText">Loading sessions...</span>
+          </div>
+        `;
+      }
+      document.getElementById('main-content').innerHTML = content;
+    }
+
+    function toggleChat() {
+      const chat = document.querySelector('.chatbox');
+      chat.style.display = (chat.style.display === 'none' || chat.style.display === '') ? 'block' : 'none';
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('userInput');
+      const message = input.value.trim();
+      if (!message) return;
+      // You can connect it to backend later
+      alert("Sent: " + message);
+      input.value = "";
+    }
+
+    // Navigation buttons
+    document.getElementById("homeBtn").addEventListener("click", () => loadPage('homepage'));
+    document.getElementById("manageBtn").addEventListener("click", () => window.location.href = "manage-bookings.html");
+    document.getElementById("bookBtn").addEventListener("click", () => window.location.href = "booking.html");
+    document.getElementById("messagesBtn").addEventListener("click", () => toggleChat());
+    document.getElementById("settingsBtn").addEventListener("click", () => window.location.href = "settings.html");
+  </script>
+
+</body>
 </html>
