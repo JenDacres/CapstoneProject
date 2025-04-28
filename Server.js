@@ -1,5 +1,5 @@
 const express = require("express");
-const mysql = require("mysql");
+const mysql = require("mysql2");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const twilio = require("twilio");
@@ -19,8 +19,8 @@ app.use(express.json());
 
 const db = mysql.createConnection({
   host: "localhost",
-  user: "root",
-  password: "Kaykay1607",
+  user: "admin",
+  password: "uwigym",
   database: "myuwigym"
 });
 
@@ -473,17 +473,44 @@ app.get("/admin/pending-users", (req, res) => {
       res.json(results[0]);
     });
   });
+
+  app.post("/trainer/change-password", (req, res) => {
+    const { user_id, currentPassword, newPassword } = req.body;
+  
+    db.query("SELECT password_hash FROM users WHERE user_id = ?", [user_id], (err, results) => {
+      if (err || results.length === 0) return res.status(400).json({ message: "User not found" });
+  
+      const hashedPassword = results[0].password_hash;
+  
+      bcrypt.compare(currentPassword, hashedPassword, (err, match) => {
+        if (!match) {
+          return res.status(400).json({ success: false, message: "Current password is incorrect" });
+        }
+  
+        bcrypt.hash(newPassword, 10, (err, newHash) => {
+          if (err) return res.status(500).json({ message: "Error updating password" });
+  
+          db.query("UPDATE users SET password_hash = ? WHERE user_id = ?", [newHash, user_id], (err) => {
+            if (err) return res.status(500).json({ message: "Failed to update password" });
+            res.json({ success: true, message: "Password updated successfully!" });
+          });
+        });
+      });
+    });
+  });
+  
     
   
 
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
-});
-
-server.listen(5000, () => {
-  console.log("Server running on port 5000...");
-});
+  const server = http.createServer(app);
+  const io = new Server(server, {
+    cors: { origin: "*" }
+  });
+  
+  // Make io accessible in your handlers if needed
+  global.io = io;
+  
+  server.listen(3001, () => {
+    console.log("Server running on port 3001...");
+  });
+  

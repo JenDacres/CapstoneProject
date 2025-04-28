@@ -6,16 +6,16 @@
   <title>Trainer Dashboard</title>
   <link rel="stylesheet" href="trainer.css" />
 </head>
+
 <body>
   <div class="trainer-container">
-    
     <h2>Trainer Dashboard</h2>
 
     <div class="button-container">
       <button onclick="loadTrainerPage('requests')">Requests</button>
       <button onclick="loadTrainerPage('clients')">Upcoming Clients</button>
-       <button onclick="window.location.href='liveoccupancy-a.html'">Live Occupancy</button>
-
+      <button onclick="window.location.href='liveoccupancy-a.html'">Live Occupancy</button>
+      <button onclick="window.location.href='trainer_change_password.html'">Change Password</button> <!-- NEW -->
     </div>
 
     <div id="trainerContent"></div>
@@ -46,7 +46,6 @@
               contentDiv.innerHTML = "<p>No pending requests.</p>";
               return;
             }
-
             const listItems = data.map(req => `
               <li>
                 <strong>${req.full_name}</strong><br/>
@@ -72,19 +71,14 @@
               return;
             }
 
-            const listItems = data.map(
-              booking => `<li><strong>${booking.full_name}</strong><br/>📅 ${booking.date} at 🕒 ${booking.time_slot}</li>`
-            ).join("");
+            const listItems = data.map(booking => `
+              <li>
+                <strong>${booking.full_name}</strong><br/>
+                📅 ${booking.date} at 🕒 ${booking.time_slot}
+              </li>
+            `).join("");
 
             contentDiv.innerHTML = `<h3>Upcoming Clients</h3><ul>${listItems}</ul>`;
-          });
-      }
-
-      if (section === "occupancy") {
-        fetch("http://localhost:5000/live-occupancy")
-          .then(res => res.json())
-          .then(data => {
-            contentDiv.innerHTML = `<h3>Live Occupancy</h3><p>Currently: <strong>${data.occupancy}</strong> / 25</p>`;
           });
       }
     }
@@ -102,7 +96,7 @@
       });
     }
 
-    loadTrainerPage("requests"); // default load
+    loadTrainerPage("requests"); // Default page when loaded
   </script>
 </body>
 </html>
