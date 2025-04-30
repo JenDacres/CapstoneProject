@@ -43,6 +43,8 @@ CREATE TABLE trainer_requests (
   FOREIGN KEY (trainer_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
+-- Trainer Availability Table
+-- This table tracks the availability of trainers for bookings
 CREATE TABLE trainer_availability (
   id INT AUTO_INCREMENT PRIMARY KEY,
   trainer_id VARCHAR(20),
@@ -52,3 +54,20 @@ CREATE TABLE trainer_availability (
   FOREIGN KEY (trainer_id) REFERENCES users(user_id)
 );
 
+-- Report Table
+-- This table stores reports made by users about trainers or other users
+CREATE TABLE reports (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  reporter_id VARCHAR(20) NOT NULL,
+  reported_id VARCHAR(20) NOT NULL,
+  report_reason TEXT NOT NULL,
+  report_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (reporter_id) REFERENCES users(user_id),
+  FOREIGN KEY (reported_id) REFERENCES users(user_id)
+);
+
+-- Adding a new column to track monthly visits
+-- This column will be updated at the end of each month to reset the count
+ALTER TABLE users
+ADD COLUMN monthly_visits INT DEFAULT 0,
+ADD COLUMN last_reset_month INT DEFAULT MONTH(CURRENT_DATE);
