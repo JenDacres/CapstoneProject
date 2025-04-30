@@ -27,16 +27,12 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded images
 
 const db = mysql.createConnection({
-    host: "localhost",
+    host: "192.168.0.13",
     user: "admin",
     password: "uwigym",
     database: "myuwigym"
 });
 
-db.connect(err => {
-    if (err) throw err;
-    console.log("MySQL Connected...");
-});
 
 const twilioClient = twilio(
     process.env.TWILIO_ACCOUNT_SID,
