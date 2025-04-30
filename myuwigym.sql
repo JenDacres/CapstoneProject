@@ -2,6 +2,8 @@
 -- SET search_path TO myuwigym;  -- Uncomment if using PostgreSQL
 
 -- Users Table
+-- This table stores user information including their role and hashed password
+-- The user_id is auto-generated in a specific format (e.g., UWI-0001)
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     user_id VARCHAR(20) UNIQUE NOT NULL,  -- Auto-generated formatted ID
@@ -14,6 +16,7 @@ CREATE TABLE users (
 );
 
 -- Bookings Table
+-- This table tracks bookings made by users for gym slots
 CREATE TABLE bookings (
     id SERIAL PRIMARY KEY,
     user_id VARCHAR(20) NOT NULL,  -- Matches the users table
@@ -24,6 +27,8 @@ CREATE TABLE bookings (
 );
 
 -- Live Occupancy Table
+-- This table tracks the number of users in the gym at any given time
+-- It is updated in real-time and can be used to manage capacity
 CREATE TABLE occupancy (
     id SERIAL PRIMARY KEY,
     date DATE NOT NULL,
@@ -32,7 +37,8 @@ CREATE TABLE occupancy (
     UNIQUE(date, time_slot)  -- Prevents duplicate entries
 );
 
-
+-- Trainer Requests Table
+-- This table tracks requests made by users to book trainers
 CREATE TABLE trainer_requests (
   id INT AUTO_INCREMENT PRIMARY KEY,
   booking_id INT NOT NULL,
@@ -57,14 +63,12 @@ CREATE TABLE trainer_availability (
 -- Report Table
 -- This table stores reports made by users about trainers or other users
 CREATE TABLE reports (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  reporter_id VARCHAR(20) NOT NULL,
-  reported_id VARCHAR(20) NOT NULL,
-  report_reason TEXT NOT NULL,
-  report_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (reporter_id) REFERENCES users(user_id),
-  FOREIGN KEY (reported_id) REFERENCES users(user_id)
+  id SERIAL PRIMARY KEY,
+  user_id VARCHAR(20),
+  message TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 -- Adding a new column to track monthly visits
 -- This column will be updated at the end of each month to reset the count
