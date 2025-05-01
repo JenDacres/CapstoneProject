@@ -20,26 +20,7 @@
             <label for="email">Email Address</label>
             <input type="email" id="email" name="email" required>
             <small class="error-message" id="error-email"></small>
-
-
-            <label for="role">Role</label>
-            <select id="role" name="role" required>
-                <option value="Member">Member</option>
-                <option value="Trainer">Trainer</option>
-                <option value="Administrator">Administrator</option>
-            </select>
-            <small class="error-message" id="error-role"></small>
-
-            <label for="area-code">Area Code</label>
-            <select id="area-code" name="area_code" required>
-              <option value="+1">+1 (USA, Canada, Jamaica, etc.)</option>
-              <option value="+44">+44 (UK)</option>
-              <option value="+1-876">+1-876 (Jamaica)</option>
-              <option value="+1-784">+1-784 (St. Vincent)</option>
-              <option value="+1-868">+1-868 (Trinidad & Tobago)</option>
-              <!-- Add more as needed -->
-            </select>
-            <small class="error-message" id="error-area-code"></small>
+            
 
             <label for="phone">Phone Number</label>
             <input type="tel" id="phone" name="phone" required />
@@ -64,6 +45,10 @@
     const form = document.getElementById("register-form");
     const successDiv = document.getElementById("success-message");
     const passwordStrengthEl = document.getElementById("password-strength");
+    const passwordE1 = document.getElementById("password");
+    const confirmPasswordE1 = document.getElementById("confirm-password");
+    const errorPasswordE1 = document.getElementById("error-password");
+    const errorConfirmE1 = document.getElementById("error-confirm");
     let redirectTimer = null;
 
     form.addEventListener("submit", async function (event) {
@@ -150,6 +135,15 @@
         const strength = getStrength(password);
         passwordStrengthEl.textContent = strength.label;
         passwordStrengthEl.className = strength.class;
+
+        //For passwords that are too short
+        if(password.lenghth < 6){
+            errorPasswordE1.textContent = "Password must be at least 6 characters.";
+        } else {
+            errorPasswordE1.testContent = "";
+        }
+
+        checkPasswordMatch();  //To check if the two passwords match in real time
     }
 
     function getStrength(password) {
@@ -161,6 +155,19 @@
         if (medium.test(password)) return { label: "Medium strength", class: "medium" };
         return { label: "Weak password", class: "weak" };
     }
+
+    function checkPasswordMatch(){
+        const password = passwordE1.value;
+        const confirm = confirmPasswordE1.value;
+
+        if(confirm && password !== confirm){
+            errorConfirmE1.textContent = "Passwords do not match.";
+        } else {
+            errorConfirmE1.textContent = "";
+        }
+    }
+
+    confirmPasswordE1.addEventListener("input", checkPasswordMatch);
 </script>
 
 </body>
