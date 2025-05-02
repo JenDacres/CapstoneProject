@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="">
+
+<head>
+  <meta charset="UTF-8">
+  <title data-i18n="myBookings">My Bookings</title>
+  <link rel="stylesheet" href="manage_bookings.css">
+  <script src="translations.js"></script>
+  <script src="language.js" defer></script>
+</head>
+
+<body>
+
+  <div class="container">
+    <h1 data-i18n="myBookings">My Bookings</h1>
+    <button class="refresh-btn" onclick="loadBookings()" data-i18n="refresh">🔄 Refresh</button>
+    <ul id="bookingsList"></ul>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <h2 data-i18n="reschedule">Reschedule</h2>
+      <select id="newTimeSlot"></select>
+      <div class="button-container">
+        <button onclick="confirmEdit()" data-i18n="confirm">Confirm</button>
+        <button onclick="closeModal()" data-i18n="cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Message -->
+  <div id="toast"></div>
+
+  <script>
+    const userId = localStorage.getItem("user_id");
+    const bookingsList = document.getElementById("bookingsList");
+    const editModal = document.getElementById("editModal");
+    const newTimeSlot = document.getElementById("newTimeSlot");
+    const toast = document.getElementById("toast");
+
+    let editingBookingId = null;
+
+    function getTranslation(key) {
+      const lang = localStorage.getItem("preferredLanguage") || "en";
+      return translations[lang][key] || key;
+    }
+
+    function loadBookings() {
+      fetch(`http://localhost:5000/my-bookings/${userId}`)
+        .then(res => res.json())
+        .then(bookings => {
+          bookingsList.innerHTML = '';
+
+          if (bookings.length === 0) {
+            bookingsList.innerHTML = `<p data-i18n="noBookings">${getTranslation("noBookings")}</p>`;
+            translatePage();
+            return;
+          }
+
+          bookings.forEach(booking => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <span class="${booking.status === 'Confirmed' ? 'confirmed' : 'cancelled'}">
+                <strong>${booking.date}</strong> | ${booking.time_slot}
+              </span>
+              <div>
+                <button class="edit" onclick="openEdit(${booking.id}, '${booking.date}')" data-i18n="edit">${getTranslation("edit")}</button>
+                <button class="delete" onclick="deleteBooking(${booking.id})" data-i18n="delete">${getTranslation("delete")}</button>
+              </div>
+            `;
+            bookingsList.appendChild(li);
+            translatePage(); // ensure buttons are translated
+          });
+        });
+    }
+
+    function openEdit(id, date) {
+      editingBookingId = id;
+      editModal.style.display = "flex";
+
+      fetch(`http://localhost:5000/available-times/${date}`)
+        .then(res => res.json())
+        .then(times => {
+          newTimeSlot.innerHTML = times.length
+            ? times.map(slot => `<option value="${slot}">${slot}</option>`).join("")
+            : `<option disabled>${getTranslation("noSlots") || "No available slots"}</option>`;
+        });
+    }
+
+    function confirmEdit() {
+      const selectedTime = newTimeSlot.value;
+      if (!selectedTime) {
+        showToast(getTranslation("noTimeSelected") || "No time selected!");
+        return;
+      }
+
+      fetch(`http://localhost:5000/update-booking/${editingBookingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ time_slot: selectedTime })
+      })
+        .then(res => res.json())
+        .then(data => {
+          showToast(data.message);
+          closeModal();
+          loadBookings();
+        });
+    }
+
+    function deleteBooking(id) {
+      const confirmMsg = getTranslation("deleteConfirm") || "Are you sure you want to cancel this booking?";
+      if (!confirm(confirmMsg)) return;
+
+      fetch(`http://localhost:5000/cancel-booking/${id}`, { method: "DELETE" })
+        .then(res => res.text())
+        .then(msg => {
+          showToast(msg);
+          loadBookings();
+        });
+    }
+
+    function closeModal() {
+      editModal.style.display = "none";
+      editingBookingId = null;
+    }
+
+    function showToast(message) {
+      toast.innerText = message;
+      toast.className = "show";
+      setTimeout(() => {
+        toast.className = toast.className.replace("show", "");
+      }, 3000);
+    }
+
+    loadBookings();
+    setInterval(loadBookings, 120000);
+  </script>
+</body>
+
+</html>

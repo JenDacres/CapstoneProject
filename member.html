@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MyUWIGym | Member Dashboard</title>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <!--<link rel="stylesheet" href="member-new.css">-->
   <link rel="stylesheet" href="chatbox.css">
+
 
   <style>
     body {
@@ -24,7 +25,7 @@
       padding: 20px;
       background: #fff;
       border-radius: 20px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
       text-align: center;
       position: relative;
     }
@@ -37,7 +38,8 @@
       margin-bottom: 10px;
     }
 
-    .plan-box, .activity-box {
+    .plan-box,
+    .activity-box {
       background: #f0f4f8;
       margin: 15px 0;
       padding: 15px;
@@ -45,6 +47,7 @@
       text-align: left;
     }
 
+    /* Bottom Navigation */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -53,7 +56,8 @@
       display: flex;
       justify-content: space-around;
       padding: 10px 0;
-      box-shadow: 0 -3px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.1);
+      z-index: 998;
     }
 
     .bottom-nav button {
@@ -68,6 +72,16 @@
       color: #d32f2f;
     }
 
+    /* Floating + Button */
+    .floating-plus {
+      position: fixed;
+      bottom: 75px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      animation: bounce 2s ease;
+    }
+
     .add-button {
       background-color: #e53935;
       color: white;
@@ -76,11 +90,113 @@
       border-radius: 50%;
       border: none;
       font-size: 28px;
-      margin-top: -30px;
       display: flex;
       justify-content: center;
       align-items: center;
-      box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+    }
+
+    /* Bounce Animation */
+    @keyframes bounce {
+
+      0%,
+      20%,
+      50%,
+      80%,
+      100% {
+        transform: translateX(-50%) translateY(0);
+      }
+
+      40% {
+        transform: translateX(-50%) translateY(-20px);
+      }
+
+      60% {
+        transform: translateX(-50%) translateY(-10px);
+      }
+    }
+
+    /* Chat Toggle Button */
+    .chat-toggle {
+      position: fixed;
+      bottom: 140px;
+      right: 20px;
+      background-color: #333;
+      color: white;
+      border: none;
+      font-size: 20px;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
+      z-index: 999;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      animation: slideUp 1.5s ease forwards;
+    }
+
+    /* Slide Up Animation */
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Chatbox */
+    .chatbox {
+      position: fixed;
+      bottom: 200px;
+      right: 20px;
+      width: 300px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      display: none;
+      z-index: 999;
+    }
+
+    .chatbox-header {
+      background: black;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chatbox-messages {
+      padding: 10px;
+      height: 200px;
+      overflow-y: auto;
+    }
+
+    .chatbox-input {
+      display: flex;
+      padding: 10px;
+      gap: 5px;
+    }
+
+    .chatbox-input input {
+      flex: 1;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .chatbox-input button {
+      padding: 8px 12px;
+      background: black;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
 
     @media (max-width: 450px) {
@@ -88,138 +204,45 @@
         margin: 10px;
       }
     }
-
-  /* Floating + Button */
-  .floating-plus {
-    position: fixed;
-    bottom: 75px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 999;
-  }
-
-  .add-button {
-    background-color: #e53935;
-    color: white;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    border: none;
-    font-size: 28px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
-    cursor: pointer;
-  }
-
-  /* Chat Toggle Button */
-  .chat-toggle {
-    position: fixed;
-    bottom: 140px;
-    right: 20px;
-    background-color: #333;
-    color: white;
-    border: none;
-    font-size: 20px;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    cursor: pointer;
-    z-index: 999;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-  }
-
-  /* Chatbox itself */
-  .chatbox {
-    position: fixed;
-    bottom: 200px;
-    right: 20px;
-    width: 300px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    overflow: hidden;
-    display: none;
-    z-index: 999;
-  }
-
-  .chatbox-header {
-    background: black;
-    color: white;
-    padding: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .chatbox-messages {
-    padding: 10px;
-    height: 200px;
-    overflow-y: auto;
-  }
-
-  .chatbox-input {
-    display: flex;
-    padding: 10px;
-    gap: 5px;
-  }
-
-  .chatbox-input input {
-    flex: 1;
-    padding: 8px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-  }
-
-  .chatbox-input button {
-    padding: 8px 12px;
-    background: black;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
   </style>
 </head>
 
-<body onload="loadPage('homepage')">
+<<body onload="loadPage('homepage')">
 
   <div class="container" id="main-content">
     <!-- Dynamic content will load here -->
   </div>
 
   <!-- Floating Red Button -->
-  <!--<div class="floating-plus">
+  <div class="floating-plus">
     <button id="bookBtn" class="add-button"><i class="fas fa-plus"></i></button>
-  </div> -->
+  </div>
 
   <!-- Bottom Navigation -->
   <nav class="bottom-nav">
     <button id="homeBtn" title="Home"><i class="fas fa-home"></i></button>
     <button id="manageBtn" title="Manage"><i class="fas fa-calendar-alt"></i></button>
-    <button id="bookBtn" class="add-button"><i class="fas fa-plus"></i></button>
     <button id="messagesBtn" title="Messages"><i class="fas fa-comment-dots"></i></button>
     <button id="settingsBtn" title="Settings"><i class="fas fa-cog"></i></button>
   </nav>
 
-  <!-- Chatbox toggle -->
+  <!-- Chatbox Toggle -->
   <button class="chat-toggle" onclick="toggleChat()">💬</button>
-  <div class="chatbox" style="display: none;">
-    <div class="chatbox-header">
+
+  <div class="chatbox">
+    <div class="chatbox-header" data-i18n="assistant">
       MyUWIGym Assistant
       <button onclick="toggleChat()">❌</button>
     </div>
     <div class="chatbox-messages"></div>
     <div class="chatbox-input">
-      <input type="text" placeholder="Ask something..." id="userInput" />
-      <button onclick="sendMessage()">Send</button>
+      <input type="text" placeholder="" id="userInput" data-i18n="askSomething" />
+      <button onclick="sendMessage()" data-i18n="send">Send</button>
     </div>
   </div>
 
-  <script src="chatbox.js" defer></script>
-
+  <script src="translations.js"></script>
+  <script src="language.js" defer></script>
   <script>
     function loadPage(pageId) {
       let userName = localStorage.getItem("full_name") || "Loading";
@@ -228,20 +251,21 @@
       if (pageId === 'homepage') {
         content = `
           <img src="profile-placeholder.png" class="profile-pic" alt="Profile Picture">
-          <h1>Welcome, ${userName}...!</h1>
+          <h1 data-i18n="welcome">${translateText('welcome', { name: userName })}</h1>
 
           <div class="plan-box">
-            <strong>🏋‍♂ My Plan for Today</strong><br>
-            <span id="occupancyText">Loading current occupancy...</span>
+            <strong data-i18n="myPlan">🏋‍♂ My Plan for Today</strong><br>
+            <span id="occupancyText" data-i18n="loadingOccupancy">Loading current occupancy...</span>
           </div>
 
           <div class="activity-box">
-            <strong>📅 Today’s Activity</strong><br>
-            <span id="activityText">Loading sessions...</span>
+            <strong data-i18n="upcomingSessions">📅 Upcoming Sessions</strong><br>
+            <span id="activityText" data-i18n="loadingSessions">Loading sessions...</span>
           </div>
         `;
       }
       document.getElementById('main-content').innerHTML = content;
+      translatePage();
     }
 
     function toggleChat() {
@@ -253,18 +277,17 @@
       const input = document.getElementById('userInput');
       const message = input.value.trim();
       if (!message) return;
-      // You can connect it to backend later
       alert("Sent: " + message);
       input.value = "";
     }
 
     // Navigation buttons
     document.getElementById("homeBtn").addEventListener("click", () => loadPage('homepage'));
-    document.getElementById("manageBtn").addEventListener("click", () => window.location.href = "manage-bookings.html");
+    document.getElementById("manageBtn").addEventListener("click", () => window.location.href = "manage_bookings.html");
     document.getElementById("bookBtn").addEventListener("click", () => window.location.href = "booking.html");
     document.getElementById("messagesBtn").addEventListener("click", () => toggleChat());
-    document.getElementById("settingsBtn").addEventListener("click", () => window.location.href = "settings.html");
+    document.getElementById("settingsBtn").addEventListener("click", () => window.location.href = "member_settings.html");
   </script>
+  </body>
 
-</body>
 </html>

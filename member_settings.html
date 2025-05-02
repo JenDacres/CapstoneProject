@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="settings">Settings</title>
+  <link rel="stylesheet" href="member_settings.css" />
+  <script src="translations.js"></script>
+  <script src="language.js" defer></script>
+</head>
+
+<body>
+  <div class="settings-container">
+    <a href="member.html" class="back-arrow">&#8592;</a>
+    <h2 data-i18n="settings">Settings</h2>
+
+    <section>
+      <h3 data-i18n="profilePicture">Profile Picture</h3>
+      <form id="profileForm" enctype="multipart/form-data">
+        <input type="file" id="profilePic" name="profile_picture" accept="image/*" required />
+        <button type="submit" data-i18n="uploadPicture">Upload Picture</button>
+      </form>
+    </section>
+
+    <section>
+      <h3 data-i18n="changePassword">Change Password</h3>
+      <form id="passwordForm">
+        <input type="password" id="currentPassword" placeholder="Current Password" data-i18n="currentPassword"
+          required />
+        <input type="password" id="newPassword" placeholder="New Password" data-i18n="newPassword" required />
+        <button type="submit" data-i18n="changePassword">Change Password</button>
+      </form>
+    </section>
+
+    <section>
+      <h3 data-i18n="languagePreference">Language Preference</h3>
+      <select id="languageSelect" onchange="setLanguage(this.value)">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+        <option value="de">Deutsch</option>
+      </select>
+    </section>
+
+    <section>
+      <h3 data-i18n="reportIssue">Report Equipment Issue</h3>
+      <form id="reportForm" enctype="multipart/form-data">
+        <textarea id="reportText" placeholder="Describe the issue..." data-i18n="describeIssue" rows="4"
+          required></textarea>
+        <input type="file" id="reportImage" accept="image/*" />
+        <button type="submit" data-i18n="sendReport">Send Report</button>
+      </form>
+    </section>
+  </div>
+
+  <script src="member_settings.js" defer></script>
+</body>
+
+</html>
