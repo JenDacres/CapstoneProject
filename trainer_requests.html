@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trainer Requests</title>
+  <link rel="stylesheet" href="trainer.css" />
+</head>
+
+<body>
+  <div class="trainer-container">
+    <h2>Trainer Requests</h2>
+
+    <div class="requests-list">
+      <h3>Received Requests</h3>
+
+      <div class="request-item">
+        <strong>John Doe</strong><br />
+        Requesting session on Monday at 10 AM
+        <div class="request-actions">
+          <button class="accept-btn" onclick="handleDecision(this, 'Accepted')">Accept</button>
+          <button class="deny-btn" onclick="handleDecision(this, 'Denied')">Deny</button>
+        </div>
+      </div>
+
+      <div class="request-item">
+        <strong>Jane Smith</strong><br />
+        Can we reschedule my Thursday session?
+        <div class="request-actions">
+          <button class="accept-btn" onclick="handleDecision(this, 'Accepted')">Accept</button>
+          <button class="deny-btn" onclick="handleDecision(this, 'Denied')">Deny</button>
+        </div>
+      </div>
+
+      <div class="request-item">
+        <strong>Mike Johnson</strong><br />
+        Looking for a new workout plan
+        <div class="request-actions">
+          <button class="accept-btn" onclick="handleDecision(this, 'Accepted')">Accept</button>
+          <button class="deny-btn" onclick="handleDecision(this, 'Denied')">Deny</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="back-btn" onclick="window.location.href='trainer.html'">Back to Dashboard</button>
+  </div>
+
+  <script>
+    function handleDecision(button, status) {
+      const actionsDiv = button.parentElement;
+      const requestItem = actionsDiv.parentElement;
+
+      // Remove action buttons
+      actionsDiv.remove();
+
+      // Add status message
+      const statusMsg = document.createElement("div");
+      statusMsg.className = "status-message";
+      statusMsg.textContent = `Request ${status}`;
+      requestItem.appendChild(statusMsg);
+    }
+  </script>
+</body>
+</html>

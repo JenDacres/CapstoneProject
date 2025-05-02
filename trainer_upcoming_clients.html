@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upcoming Clients</title>
+  <link rel="stylesheet" href="trainer.css" />
+</head>
+
+<body>
+  <div class="trainer-container">
+    <h2>Upcoming Clients</h2>
+
+    <button id="undo-btn" onclick="undoAction()" disabled>Undo</button>
+
+    <ul id="client-list">
+      <li><input type="checkbox" onclick="markClient(this)" data-client="John Doe - 10:00 AM" /> John Doe - 10:00 AM</li>
+      <li><input type="checkbox" onclick="markClient(this)" data-client="Jane Smith - 12:00 PM" /> Jane Smith - 12:00 PM</li>
+      <li><input type="checkbox" onclick="markClient(this)" data-client="Mike Johnson - 2:00 PM" /> Mike Johnson - 2:00 PM</li>
+    </ul>
+    
+    <button class="back-btn" onclick="window.location.href='trainer.html'">Back to Dashboard</button>
+  </div>
+
+  <script>
+    let lastRemovedClient = null;
+
+    function markClient(checkbox) {
+      if (checkbox.checked) {
+        // Remove the client's list item from the DOM
+        lastRemovedClient = checkbox.parentElement;
+        checkbox.parentElement.remove();
+
+        // Enable the undo button
+        document.getElementById("undo-btn").disabled = false;
+      }
+    }
+
+    function undoAction() {
+      if (lastRemovedClient) {
+        // Append the last removed client back to the list
+        document.getElementById("client-list").appendChild(lastRemovedClient);
+
+        // Disable the undo button if no action to undo
+        document.getElementById("undo-btn").disabled = true;
+      }
+    }
+  </script>
+</body>
+</html>
