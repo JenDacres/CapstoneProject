@@ -70,7 +70,7 @@
             const email = form.email.value.trim();
             const area_code = form.area_code.value.trim();
             const phone = form.phone.value.trim();
-            const fullPhone = `+${area_code}${phone}`;
+            const fullPhone = `+${area_code}${phone}`;  // ✅ Properly formatted phone
             const password = form.password.value;
 
             let valid = true;
@@ -108,8 +108,7 @@
                 const res = await fetch("http://localhost:5000/register", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-
-                    body: JSON.stringify({ full_name, email, phone, password })
+                    body: JSON.stringify({ full_name, email, phone: fullPhone, password }) // ✅ sending formatted phone
                 });
 
                 const result = await res.json();
@@ -120,15 +119,16 @@
                     successDiv.textContent = `✅ ${result.message} ${result.user_id ? `Your ID: ${result.user_id}` : ""}`;
                     successDiv.classList.add("visible");
                     redirectTimer = setTimeout(() => {
-                        window.location.href = "/login.html";
+                        window.location.href = "/LoginScreen.html";
                     }, 5000);
                 } else {
-                    alert(result.message || "Registration failed.");
+                    alert(result.error || result.message || "Registration failed."); // ✅ Show real backend error
                 }
             } catch (err) {
                 alert("An error occurred during registration.");
             }
         });
+
 
         function showError(fieldId, message) {
             const field = document.getElementById(fieldId);
