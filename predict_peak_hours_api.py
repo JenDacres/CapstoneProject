@@ -9,8 +9,8 @@ app = Flask(__name__)
 # Database connection details
 DB_CONFIG = {
     'host': 'localhost',
-    'user': 'root',
-    'password': 'Kaykay1607',
+    'user': 'admin',
+    'password': 'uwigym',
     'database': 'myuwigym'
 }
 
