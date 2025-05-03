@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Register</title>
     <link rel="stylesheet" href="RegisterScreen.css">
 </head>
+
 <body>
 
     <div class="container">
@@ -20,7 +22,12 @@
             <label for="email">Email Address</label>
             <input type="email" id="email" name="email" required>
             <small class="error-message" id="error-email"></small>
-            
+
+            <label for="area-code">Area Code</label>
+            <small style="font-size: 15px; color: #555; margin-top: 5px;">(e.g., +1 for USA)</small>
+            <input type="text" id="area-code" name="area_code" required pattern="\d{1,4}" />
+            <small class="error-message" id="error-area-code"></small>
+
 
             <label for="phone">Phone Number</label>
             <input type="tel" id="phone" name="phone" required />
@@ -29,11 +36,11 @@
 
 
             <label for="password">Password</label>
-          <input type="password" id="password" name="password" required oninput="checkPasswordStrength(this.value)" />
-          <small id="password-strength"></small>
-          <small class="error-message" id="error-password"></small>
-          
-          
+            <input type="password" id="password" name="password" required oninput="checkPasswordStrength(this.value)" />
+            <small id="password-strength"></small>
+            <small class="error-message" id="error-password"></small>
+
+
 
 
             <button type="submit" class="submit-button">Continue</button>
@@ -41,134 +48,137 @@
         <div id="success-message" class="success-message"></div>
 
     </div>
-<script>
-    const form = document.getElementById("register-form");
-    const successDiv = document.getElementById("success-message");
-    const passwordStrengthEl = document.getElementById("password-strength");
-    const passwordE1 = document.getElementById("password");
-    const confirmPasswordE1 = document.getElementById("confirm-password");
-    const errorPasswordE1 = document.getElementById("error-password");
-    const errorConfirmE1 = document.getElementById("error-confirm");
-    let redirectTimer = null;
+    <script>
+        const form = document.getElementById("register-form");
+        const successDiv = document.getElementById("success-message");
+        const passwordStrengthEl = document.getElementById("password-strength");
+        const passwordE1 = document.getElementById("password");
+        const confirmPasswordE1 = document.getElementById("confirm-password");
+        const errorPasswordE1 = document.getElementById("error-password");
+        const errorConfirmE1 = document.getElementById("error-confirm");
+        let redirectTimer = null;
 
-    form.addEventListener("submit", async function (event) {
-        event.preventDefault();
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
 
-        // Clear previous messages
-        document.querySelectorAll(".error-message").forEach(e => e.textContent = "");
-        document.querySelectorAll("input, select").forEach(el => el.classList.remove("invalid"));
-        successDiv.textContent = "";
-        successDiv.classList.remove("visible");
+            document.querySelectorAll(".error-message").forEach(e => e.textContent = "");
+            document.querySelectorAll("input, select").forEach(el => el.classList.remove("invalid"));
+            successDiv.textContent = "";
+            successDiv.classList.remove("visible");
 
-        const full_name = form.full_name.value.trim();
-        const email = form.email.value.trim();
-        const phone = form.phone.value.trim();
-        const role = form.role.value;
-        const password = form.password.value;
+            const full_name = form.full_name.value.trim();
+            const email = form.email.value.trim();
+            const area_code = form.area_code.value.trim();
+            const phone = form.phone.value.trim();
+            const fullPhone = `+${area_code}${phone}`;
+            const password = form.password.value;
 
-        let valid = true;
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const phoneRegex = /^\d{10,15}$/;
+            let valid = true;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const phoneRegex = /^\d{6,15}$/;
 
-        if (full_name.length < 3) {
-            showError("full-name", "Full name must be at least 3 characters.");
-            valid = false;
-        }
-
-        if (!emailRegex.test(email)) {
-            showError("email", "Please enter a valid email address.");
-            valid = false;
-        }
-
-        if (!phoneRegex.test(phone)) {
-            showError("phone", "Phone number must be 10 to 15 digits.");
-            valid = false;
-        }
-
-        if (!role) {
-            showError("role", "Please select a role.");
-            valid = false;
-        }
-
-        if (password.length < 6) {
-            showError("password", "Password must be at least 6 characters.");
-            valid = false;
-        }
-
-        if (!valid) return;
-
-        try {
-            const res = await fetch("http://localhost:5000/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ full_name, email, phone, role, password })
-            });
-
-            const result = await res.json();
-
-            if (res.ok) {
-                form.reset();
-                passwordStrengthEl.textContent = "";
-                successDiv.textContent = `✅ ${result.message} ${result.user_id ? `Your ID: ${result.user_id}` : ""}`;
-                successDiv.classList.add("visible");
-                redirectTimer = setTimeout(() => {
-                    window.location.href = "/login.html"; // or your login screen
-                }, 5000);
-            } else {
-                alert(result.message || "Registration failed.");
+            if (full_name.length < 3) {
+                showError("full-name", "Full name must be at least 3 characters.");
+                valid = false;
             }
-        } catch (err) {
-            alert("An error occurred during registration.");
+
+            if (!emailRegex.test(email)) {
+                showError("email", "Please enter a valid email address.");
+                valid = false;
+            }
+
+            if (!/^\d{1,4}$/.test(area_code)) {
+                showError("area-code", "Area code must be 1 to 4 digits.");
+                valid = false;
+            }
+
+            if (!phoneRegex.test(phone)) {
+                showError("phone", "Phone number must be 6 to 15 digits.");
+                valid = false;
+            }
+
+            if (password.length < 6) {
+                showError("password", "Password must be at least 6 characters.");
+                valid = false;
+            }
+
+            if (!valid) return;
+
+            try {
+                const res = await fetch("http://localhost:5000/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+
+                    body: JSON.stringify({ full_name, email, phone, password })
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    form.reset();
+                    passwordStrengthEl.textContent = "";
+                    successDiv.textContent = `✅ ${result.message} ${result.user_id ? `Your ID: ${result.user_id}` : ""}`;
+                    successDiv.classList.add("visible");
+                    redirectTimer = setTimeout(() => {
+                        window.location.href = "/login.html";
+                    }, 5000);
+                } else {
+                    alert(result.message || "Registration failed.");
+                }
+            } catch (err) {
+                alert("An error occurred during registration.");
+            }
+        });
+
+        function showError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const errorMsg = document.getElementById("error-" + fieldId);
+            if (field && errorMsg) {
+                field.classList.add("invalid");
+                errorMsg.textContent = message;
+            }
         }
-    });
 
-    function showError(fieldId, message) {
-        const field = document.getElementById(fieldId);
-        const errorMsg = document.getElementById("error-" + fieldId);
-        if (field && errorMsg) {
-            field.classList.add("invalid");
-            errorMsg.textContent = message;
-        }
-    }
+        function checkPasswordStrength(password) {
+            const strength = getStrength(password);
+            passwordStrengthEl.textContent = strength.label;
+            passwordStrengthEl.className = strength.class;
 
-    function checkPasswordStrength(password) {
-        const strength = getStrength(password);
-        passwordStrengthEl.textContent = strength.label;
-        passwordStrengthEl.className = strength.class;
+            if (password.length < 6) {
+                errorPasswordE1.textContent = "Password must be at least 6 characters.";
+            } else {
+                errorPasswordE1.textContent = "";
+            }
 
-        //For passwords that are too short
-        if(password.lenghth < 6){
-            errorPasswordE1.textContent = "Password must be at least 6 characters.";
-        } else {
-            errorPasswordE1.testContent = "";
+            checkPasswordMatch();
         }
 
-        checkPasswordMatch();  //To check if the two passwords match in real time
-    }
+        function getStrength(password) {
+            if (password.length < 6) return { label: "Too short", class: "weak" };
+            const strong = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+            const medium = /^(?=.*[a-z])(?=.*\d)[A-Za-z\d]{6,}$/;
 
-    function getStrength(password) {
-        if (password.length < 6) return { label: "Too short", class: "weak" };
-        const strong = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-        const medium = /^(?=.*[a-z])(?=.*\d)[A-Za-z\d]{6,}$/;
-
-        if (strong.test(password)) return { label: "Strong password", class: "strong" };
-        if (medium.test(password)) return { label: "Medium strength", class: "medium" };
-        return { label: "Weak password", class: "weak" };
-    }
-
-    function checkPasswordMatch(){
-        const password = passwordE1.value;
-        const confirm = confirmPasswordE1.value;
-
-        if(confirm && password !== confirm){
-            errorConfirmE1.textContent = "Passwords do not match.";
-        } else {
-            errorConfirmE1.textContent = "";
+            if (strong.test(password)) return { label: "Strong password", class: "strong" };
+            if (medium.test(password)) return { label: "Medium strength", class: "medium" };
+            return { label: "Weak password", class: "weak" };
         }
-    }
 
-    confirmPasswordE1.addEventListener("input", checkPasswordMatch);
-</script>
+        function checkPasswordMatch() {
+            const password = passwordE1.value;
+            const confirm = confirmPasswordE1 ? confirmPasswordE1.value : "";
+            if (confirm && password !== confirm) {
+                errorConfirmE1.textContent = "Passwords do not match.";
+            } else {
+                errorConfirmE1.textContent = "";
+            }
+        }
+
+        if (confirmPasswordE1) {
+            confirmPasswordE1.addEventListener("input", checkPasswordMatch);
+        }
+    </script>
+
 
 </body>
+
 </html>

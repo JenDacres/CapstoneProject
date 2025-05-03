@@ -76,11 +76,16 @@ function sendSMS(to, message) {
     });
 }
 
-function generateUserId(role, id) {
-    let prefix = role === "Member" ? "M-" :
-        role === "Trainer" ? "T-" : "A-";
-    return `${prefix}${id.toString().padStart(4, '0')}`;
+function generateUserId(role, insertId) {
+    const rolePrefix = {
+        Member: 'M',
+        Trainer: 'T',
+        Administrator: 'A'
+    };
+    return rolePrefix[role] + insertId; // e.g., M101
 }
+
+
 
 function authenticateToken(req, res, next) {
     const authHeader = req.headers["authorization"];
@@ -97,21 +102,50 @@ function authenticateToken(req, res, next) {
 
 // Registration
 app.post("/register", (req, res) => {
-    const { full_name, email, role, area_code, phone, password } = req.body;
-    const fullPhone = `${area_code}${phone}`;
+    const { full_name, email, phone, password } = req.body;
+    const role = "Member"; // Default role
+    const formattedPhone = `+${phone.replace(/\D/g, "")}`; // Clean phone number
+
+    // Step 1: Hash password
     bcrypt.hash(password, 10, (err, hash) => {
-        if (err) return res.json({ error: err });
-        const sql = "INSERT INTO users (full_name, email, role, phone, password_hash) VALUES (?, ?, ?, ?, ?)";
-        db.query(sql, [full_name, email, role, fullPhone, hash], (err, result) => {
-            if (err) return res.status(500).json({ error: err.sqlMessage });
-            const newUserId = generateUserId(role, result.insertId);
-            db.query("UPDATE users SET user_id = ? WHERE id = ?", [newUserId, result.insertId], (err2) => {
-                if (err2) return res.status(500).json({ error: err2.sqlMessage });
+        if (err) return res.status(500).json({ error: "Password hashing failed" });
+
+        // Step 2: Get next AUTO_INCREMENT value
+        const getNextIdSql = `
+            SELECT AUTO_INCREMENT 
+            FROM information_schema.TABLES 
+            WHERE TABLE_SCHEMA = 'myuwigym' AND TABLE_NAME = 'users'
+        `;
+        db.query(getNextIdSql, (err2, results) => {
+            if (err2 || results.length === 0) {
+                return res.status(500).json({ error: "Failed to generate user ID" });
+            }
+
+            const nextId = results[0].AUTO_INCREMENT;
+            const newUserId = generateUserId(role, nextId); // e.g., M101
+
+            // Step 3: Insert user WITH user_id
+            const insertSql = `
+                INSERT INTO users (user_id, full_name, email, role, phone, password_hash)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `;
+            db.query(insertSql, [newUserId, full_name, email, role, formattedPhone, hash], (err3, result) => {
+                if (err3) {
+                    return res.status(500).json({ error: err3.sqlMessage });
+                }
+
                 res.json({ message: "User registered successfully!", user_id: newUserId });
             });
         });
     });
 });
+
+
+
+
+
+
+
 
 // Login
 app.post("/login", (req, res) => {
