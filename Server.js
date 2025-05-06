@@ -1,3 +1,4 @@
+require("dotenv").config({ path: "myuwigym.env" });
 const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
@@ -10,7 +11,7 @@ const nodemailer = require("nodemailer");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-require("dotenv").config({ path: "myuwigym.env" });
+
 
 const app = express();
 const server = http.createServer(app);
@@ -134,8 +135,17 @@ app.post("/register", (req, res) => {
                 if (err3) {
                     return res.status(500).json({ error: err3.sqlMessage });
                 }
-
-                res.json({ message: "User registered successfully!", user_id: newUserId });
+                //Email of pending status
+                sendEmail(
+                    email,
+                    "MYUWIGYM Registration Pending",
+                    `Hello ${full_name}, thanks for signing up! Your details are pending review.`
+                ).then(() => {
+                    res.json({message: "User registered successfully!", user_id: newUserId});
+                }).catch(emailErr => {
+                    console.error("Email sending failed:", emailErr);
+                    res.json({ message: "User registered successfully, but email could not be sent.", user_id: newUserId });
+                });
             });
         });
     });
