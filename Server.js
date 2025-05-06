@@ -77,6 +77,11 @@ function sendWhatsApp(to, message) {
     });
 }
 
+function generateRandomPassword(length = 10) {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
+    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
 
 function generateUserId(role, insertId) {
     const rolePrefix = {
@@ -141,7 +146,7 @@ app.post("/register", (req, res) => {
                     "MYUWIGYM Registration Pending",
                     `Hello ${full_name}, thanks for signing up! Your details are pending review.`
                 ).then(() => {
-                    res.json({message: "User registered successfully!", user_id: newUserId});
+                    res.json({ message: "User registered successfully!", user_id: newUserId });
                 }).catch(emailErr => {
                     console.error("Email sending failed:", emailErr);
                     res.json({ message: "User registered successfully, but email could not be sent.", user_id: newUserId });
@@ -264,6 +269,62 @@ app.get("/live-occupancy-summary", (req, res) => {
         });
         db.query("SELECT COUNT(*) AS current FROM gym_visits WHERE check_out IS NULL", (err2, result2) => {
             res.json({ current: result2[0].current, summary });
+        });
+    });
+});
+
+// Add trainer route
+app.post('/admin/add-trainer', async (req, res) => {
+    const { firstName, lastName, email, phone = 'N/A' } = req.body;
+
+    if (!firstName || !lastName || !email) {
+        return res.status(400).json({ message: 'Missing required fields.' });
+    }
+
+    const fullName = `${firstName} ${lastName}`;
+    const plainPassword = generateRandomPassword();
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+    // Step 1: Insert with temp user_id
+    const insertSql = `
+        INSERT INTO users (user_id, full_name, email, role, phone, password_hash)
+        VALUES (?, ?, ?, 'Trainer', ?, ?)
+    `;
+
+    db.query(insertSql, ['TEMP', fullName, email, phone, hashedPassword], (err, result) => {
+        if (err) return res.status(500).json({ message: 'Database insert failed', error: err });
+
+        const insertId = result.insertId;
+        const userId = generateUserId('Trainer', insertId);
+
+        // Step 2: Update with generated userId
+        db.query("UPDATE users SET user_id = ? WHERE id = ?", [userId, insertId], async (err2) => {
+            if (err2) return res.status(500).json({ message: 'Failed to update user_id', error: err2 });
+
+            // Step 3: Send Email
+            try {
+                await transporter.sendMail({
+                    from: process.env.EMAIL_USER,
+                    to: email,
+                    subject: 'Trainer Account Created',
+                    text: `Hello ${fullName},\n\nYour trainer account has been created.\nUser ID: ${userId}\nPassword: ${plainPassword}\n\nPlease log in and change your password.`,
+                });
+            } catch (emailErr) {
+                console.error('Email error:', emailErr.message);
+            }
+
+            // Step 4: Send WhatsApp
+            try {
+                await client.messages.create({
+                    from: 'whatsapp:+14155238886',
+                    to: `whatsapp:${phone}`, // Ensure phone is in WhatsApp format
+                    body: `Hello ${fullName}, your Trainer ID is ${userId} and temporary password is: ${plainPassword}`
+                });
+            } catch (waErr) {
+                console.error('WhatsApp error:', waErr.message);
+            }
+
+            return res.json({ message: 'Trainer added and credentials sent via email and WhatsApp.' });
         });
     });
 });
