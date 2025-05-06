@@ -69,14 +69,22 @@ function sendEmail(to, subject, text) {
     return transporter.sendMail(mailOptions);
 }
 
-function sendWhatsApp(to, message) {
+//For live Twilio integration (disabled for capstone demo)
+/*function sendWhatsApp(to, message) {
     return twilioClient.messages.create({
         body: message,
         from: process.env.TWILIO_WHATSAPP, // Twilio's Sandbox or your approved WhatsApp number
         to: `whatsapp:${to}` // Prefixing with 'whatsapp:'
     });
 }
+*/
 
+// Simulated WhatsApp message function
+function sendWhatsAppSimulated(phone, message) {
+    console.log(`[SIMULATED WhatsApp to ${phone}]: ${message}`);
+}
+
+// Generate random password for trainer
 function generateRandomPassword(length = 10) {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
     return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
@@ -273,66 +281,65 @@ app.get("/live-occupancy-summary", (req, res) => {
     });
 });
 
-// Add trainer route
-app.post('/admin/add-trainer', async (req, res) => {
-    const { firstName, lastName, email, phone = 'N/A' } = req.body;
+// Create Trainer
+app.post("/admin/add-trainer", async (req, res) => {
+    const { firstName, lastName, email } = req.body;
 
     if (!firstName || !lastName || !email) {
-        return res.status(400).json({ message: 'Missing required fields.' });
+        return res.status(400).json({ message: "All fields are required." });
     }
 
     const fullName = `${firstName} ${lastName}`;
-    const plainPassword = generateRandomPassword();
-    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+    const phone = "+1234567890"; // Replace with actual if needed
 
-    // Step 1: Insert with temp user_id
+    const rawPassword = generateRandomPassword();
+    const passwordHash = await bcrypt.hash(rawPassword, 10);
+
     const insertSql = `
-        INSERT INTO users (user_id, full_name, email, role, phone, password_hash)
-        VALUES (?, ?, ?, 'Trainer', ?, ?)
+      INSERT INTO users (full_name, email, role, phone, password_hash)
+      VALUES (?, ?, 'Trainer', ?, ?)
     `;
-
-    db.query(insertSql, ['TEMP', fullName, email, phone, hashedPassword], (err, result) => {
-        if (err) return res.status(500).json({ message: 'Database insert failed', error: err });
+    db.query(insertSql, [fullName, email, phone, passwordHash], (err, result) => {
+        if (err) {
+            console.error("Insert error:", err);
+            return res.status(500).json({ message: "Failed to add trainer." });
+        }
 
         const insertId = result.insertId;
-        const userId = generateUserId('Trainer', insertId);
+        const userId = generateUserId("Trainer", insertId);
 
-        // Step 2: Update with generated userId
-        db.query("UPDATE users SET user_id = ? WHERE id = ?", [userId, insertId], async (err2) => {
-            if (err2) return res.status(500).json({ message: 'Failed to update user_id', error: err2 });
+        db.query("UPDATE users SET user_id = ? WHERE id = ?", [userId, insertId]);
 
-            // Step 3: Send Email
-            try {
-                await transporter.sendMail({
-                    from: process.env.EMAIL_USER,
-                    to: email,
-                    subject: 'Trainer Account Created',
-                    text: `Hello ${fullName},\n\nYour trainer account has been created.\nUser ID: ${userId}\nPassword: ${plainPassword}\n\nPlease log in and change your password.`,
-                });
-            } catch (emailErr) {
-                console.error('Email error:', emailErr.message);
-            }
+        const loginInfoMessage = `
+  Hi ${fullName},
+  
+  Your trainer account has been created.
+  
+  Login ID: ${email}
+  Password: ${rawPassword}
+  
+  Please change your password after first login.
+      `.trim();
 
-            // Step 4: Send WhatsApp
-            try {
-                await client.messages.create({
-                    from: 'whatsapp:+14155238886',
-                    to: `whatsapp:${phone}`, // Ensure phone is in WhatsApp format
-                    body: `Hello ${fullName}, your Trainer ID is ${userId} and temporary password is: ${plainPassword}`
-                });
-            } catch (waErr) {
-                console.error('WhatsApp error:', waErr.message);
-            }
+        // Simulate WhatsApp
+        sendWhatsAppSimulated(phone, loginInfoMessage);
 
-            return res.json({ message: 'Trainer added and credentials sent via email and WhatsApp.' });
-        });
+        // Send Email using external function
+        sendEmail(email, "Trainer Account Created", loginInfoMessage)
+            .then(() => {
+                return res.json({ message: "Trainer created and notified via email and WhatsApp (simulated)." });
+            })
+            .catch(err => {
+                console.error("Email error:", err);
+                return res.status(500).json({ message: "Trainer added, but failed to send email." });
+            });
     });
 });
 
 
 // Trainer list
 app.get("/trainers", (req, res) => {
-    db.query("SELECT user_id, full_name, profile_image FROM users WHERE role = 'Trainer'", (err, results) => {
+    db.query("SELECT user_id, full_name FROM users WHERE role = 'Trainer'", (err, results) => {
         res.json(results);
     });
 });
@@ -373,7 +380,7 @@ app.post("/respond-trainer-request", (req, res) => {
     });
 });
 
-// Send WhatsApp after trainer acceptance
+// Send WhatsApp after trainer acceptance (Simulated)
 app.post("/send-trainer-alert", (req, res) => {
     const { requestId } = req.body;
 
@@ -394,11 +401,11 @@ app.post("/send-trainer-alert", (req, res) => {
         const message = `Hi ${full_name}, your training session on ${date} at ${time_slot} has been accepted!`;
 
         try {
-            await sendWhatsApp(phone, message);
-            res.json({ message: "WhatsApp alert sent" });
+            sendWhatsAppSimulated(phone, message);
+            res.json({ message: "Simulated WhatsApp alert sent" });
         } catch (e) {
             console.error("WhatsApp error:", e);
-            res.status(500).json({ error: "Failed to send WhatsApp message" });
+            res.status(500).json({ error: "Failed to simulate WhatsApp message" });
         }
     });
 });
