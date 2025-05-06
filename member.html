@@ -252,6 +252,7 @@
         content = `
           <img src="profile-placeholder.png" class="profile-pic" alt="Profile Picture">
           <h1 data-i18n="welcome">${translateText('welcome', { name: userName })}</h1>
+          <p style="font-size: 14px; color: gray;">ID: ${localStorage.getItem("user_id") || "N/A"}</p>
 
           <div class="plan-box">
             <strong data-i18n="myPlan">🏋‍♂ My Plan for Today</strong><br>

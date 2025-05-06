@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,55 +11,94 @@
 <body>
   <div class="trainer-container">
     <h2>Trainer Requests</h2>
-
-    <div class="requests-list">
+    <div class="requests-list" id="requests-list">
       <h3>Received Requests</h3>
-
-      <div class="request-item">
-        <strong>John Doe</strong><br />
-        Requesting session on Monday at 10 AM
-        <div class="request-actions">
-          <button class="accept-btn" onclick="handleDecision(this, 'Accepted')">Accept</button>
-          <button class="deny-btn" onclick="handleDecision(this, 'Denied')">Deny</button>
-        </div>
-      </div>
-
-      <div class="request-item">
-        <strong>Jane Smith</strong><br />
-        Can we reschedule my Thursday session?
-        <div class="request-actions">
-          <button class="accept-btn" onclick="handleDecision(this, 'Accepted')">Accept</button>
-          <button class="deny-btn" onclick="handleDecision(this, 'Denied')">Deny</button>
-        </div>
-      </div>
-
-      <div class="request-item">
-        <strong>Mike Johnson</strong><br />
-        Looking for a new workout plan
-        <div class="request-actions">
-          <button class="accept-btn" onclick="handleDecision(this, 'Accepted')">Accept</button>
-          <button class="deny-btn" onclick="handleDecision(this, 'Denied')">Deny</button>
-        </div>
-      </div>
+      <!-- Requests will be dynamically inserted here -->
     </div>
 
     <button class="back-btn" onclick="window.location.href='trainer.html'">Back to Dashboard</button>
   </div>
 
   <script>
-    function handleDecision(button, status) {
-      const actionsDiv = button.parentElement;
-      const requestItem = actionsDiv.parentElement;
+    const trainerId = localStorage.getItem("user_id"); // Ensure this is saved during login
 
-      // Remove action buttons
-      actionsDiv.remove();
+    function loadTrainerRequests() {
+      fetch(`http://localhost:5000/trainer-requests/${trainerId}`)
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById("requests-list");
+          list.innerHTML = "<h3>Received Requests</h3>"; // Reset
 
-      // Add status message
-      const statusMsg = document.createElement("div");
-      statusMsg.className = "status-message";
-      statusMsg.textContent = `Request ${status}`;
-      requestItem.appendChild(statusMsg);
+          if (data.length === 0) {
+            list.innerHTML += "<p>No pending requests.</p>";
+            return;
+          }
+
+          data.forEach(req => {
+            const item = document.createElement("div");
+            item.className = "request-item";
+            item.dataset.requestId = req.id;
+
+            item.innerHTML = `
+              <strong>${req.full_name}</strong><br/>
+              Requesting session on ${req.date} at ${req.time_slot}
+              <div class="request-actions">
+                <button class="accept-btn">Accept</button>
+                <button class="deny-btn">Deny</button>
+              </div>
+            `;
+
+            item.querySelector(".accept-btn").onclick = () => handleDecision(req.id, "Accepted", item);
+            item.querySelector(".deny-btn").onclick = () => handleDecision(req.id, "Denied", item);
+
+            list.appendChild(item);
+          });
+        })
+        .catch(err => {
+          console.error("Error loading requests:", err);
+        });
     }
+
+    function handleDecision(requestId, status, item) {
+      fetch("http://localhost:5000/respond-trainer-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId, response: status })
+      })
+        .then(res => res.json())
+        .then(data => {
+          const actions = item.querySelector(".request-actions");
+          if (actions) actions.remove();
+
+          const msg = document.createElement("div");
+          msg.className = "status-message";
+          msg.textContent = `Request ${status}`;
+          item.appendChild(msg);
+
+          notifyClientByWhatsApp(requestId, status);
+        })
+        .catch(err => {
+          console.error("Failed to update request:", err);
+        });
+    }
+
+    function notifyClientByWhatsApp(requestId, status) {
+      fetch("http://localhost:5000/send-trainer-alert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId, status })
+      })
+        .then(res => res.json())
+        .then(data => {
+          console.log("WhatsApp message sent:", data.message);
+        })
+        .catch(err => {
+          console.error("Failed to send WhatsApp message:", err);
+        });
+    }
+
+    window.onload = loadTrainerRequests;
   </script>
 </body>
+
 </html>

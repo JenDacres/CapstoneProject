@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,41 +11,56 @@
 <body>
   <div class="trainer-container">
     <h2>Upcoming Clients</h2>
-
     <button id="undo-btn" onclick="undoAction()" disabled>Undo</button>
-
-    <ul id="client-list">
-      <li><input type="checkbox" onclick="markClient(this)" data-client="John Doe - 10:00 AM" /> John Doe - 10:00 AM</li>
-      <li><input type="checkbox" onclick="markClient(this)" data-client="Jane Smith - 12:00 PM" /> Jane Smith - 12:00 PM</li>
-      <li><input type="checkbox" onclick="markClient(this)" data-client="Mike Johnson - 2:00 PM" /> Mike Johnson - 2:00 PM</li>
-    </ul>
-    
+    <ul id="client-list"></ul>
     <button class="back-btn" onclick="window.location.href='trainer.html'">Back to Dashboard</button>
   </div>
 
   <script>
+    const trainerId = localStorage.getItem('user_id'); // Trainer ID from login
     let lastRemovedClient = null;
+
+    function loadClients() {
+      fetch(`http://localhost:5000/trainer-upcoming-clients/${trainerId}`)
+        .then(res => res.json())
+        .then(clients => {
+          const list = document.getElementById("client-list");
+          list.innerHTML = "";
+
+          if (clients.length === 0) {
+            list.innerHTML = "<li>No upcoming sessions.</li>";
+            return;
+          }
+
+          clients.forEach(client => {
+            const li = document.createElement("li");
+            const time = `${client.date} at ${client.time_slot}`;
+            li.innerHTML = `
+              <input type="checkbox" onclick="markClient(this)" data-client="${client.full_name} - ${time}" />
+              ${client.full_name} - ${time}
+            `;
+            list.appendChild(li);
+          });
+        });
+    }
 
     function markClient(checkbox) {
       if (checkbox.checked) {
-        // Remove the client's list item from the DOM
         lastRemovedClient = checkbox.parentElement;
         checkbox.parentElement.remove();
-
-        // Enable the undo button
         document.getElementById("undo-btn").disabled = false;
       }
     }
 
     function undoAction() {
       if (lastRemovedClient) {
-        // Append the last removed client back to the list
         document.getElementById("client-list").appendChild(lastRemovedClient);
-
-        // Disable the undo button if no action to undo
         document.getElementById("undo-btn").disabled = true;
       }
     }
+
+    loadClients();
   </script>
 </body>
+
 </html>

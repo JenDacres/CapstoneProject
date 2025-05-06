@@ -68,13 +68,14 @@ function sendEmail(to, subject, text) {
     return transporter.sendMail(mailOptions);
 }
 
-function sendSMS(to, message) {
+function sendWhatsApp(to, message) {
     return twilioClient.messages.create({
         body: message,
-        from: process.env.TWILIO_PHONE,
-        to: to
+        from: process.env.TWILIO_WHATSAPP, // Twilio's Sandbox or your approved WhatsApp number
+        to: `whatsapp:${to}` // Prefixing with 'whatsapp:'
     });
 }
+
 
 function generateUserId(role, insertId) {
     const rolePrefix = {
@@ -141,12 +142,6 @@ app.post("/register", (req, res) => {
 });
 
 
-
-
-
-
-
-
 // Login
 app.post("/login", (req, res) => {
     const { email, password } = req.body;
@@ -175,6 +170,27 @@ app.post("/book-slot", authenticateToken, (req, res) => {
         res.status(201).json({ message: "Booking successful", bookingId: result.insertId });
     });
 });
+
+// Send alert to all members
+app.post("/send-alert", async (req, res) => {
+    const { message } = req.body;
+    if (!message) return res.status(400).json({ error: "Message is required." });
+
+    const sql = "SELECT phone FROM users WHERE role = 'Member'";
+    db.query(sql, async (err, results) => {
+        if (err) return res.status(500).json({ error: "Database error." });
+
+        try {
+            const sendPromises = results.map(row => sendWhatsApp(row.phone, message));
+            await Promise.all(sendPromises);
+            res.json({ message: "Alert sent to all members." });
+        } catch (twilioErr) {
+            console.error("WhatsApp send error:", twilioErr);
+            res.status(500).json({ error: "Failed to send WhatsApp messages." });
+        }
+    });
+});
+
 
 app.get("/my-bookings", authenticateToken, (req, res) => {
     db.query("SELECT * FROM bookings WHERE user_id = ?", [req.user.userId], (err, results) => {
@@ -211,7 +227,7 @@ app.post("/check-in", authenticateToken, (req, res) => {
                     db.query("SELECT phone, full_name, role FROM users WHERE id = ?", [userId], (err, result) => {
                         const { phone, full_name, role } = result[0];
                         io.emit("checkout", { userId, full_name, role });
-                        sendSMS(phone, "Your gym session has ended. Thank you!");
+                        sendWhatsApp(phone, "Your gym session has ended. Thank you!");
                     });
                 }, 45 * 60 * 1000);
             });
@@ -283,6 +299,36 @@ app.post("/respond-trainer-request", (req, res) => {
     if (!["Accepted", "Denied"].includes(response)) return res.status(400).json({ error: "Invalid response" });
     db.query("UPDATE trainer_requests SET status = ? WHERE id = ?", [response, requestId], (err) => {
         res.json({ message: `Request ${response.toLowerCase()}` });
+    });
+});
+
+// Send WhatsApp after trainer acceptance
+app.post("/send-trainer-alert", (req, res) => {
+    const { requestId } = req.body;
+
+    const sql = `
+      SELECT u.phone, u.full_name, b.date, b.time_slot 
+      FROM trainer_requests tr
+      JOIN bookings b ON tr.booking_id = b.id
+      JOIN users u ON b.user_id = u.user_id
+      WHERE tr.id = ?
+    `;
+
+    db.query(sql, [requestId], async (err, results) => {
+        if (err || results.length === 0) {
+            return res.status(500).json({ error: "Could not fetch client info" });
+        }
+
+        const { phone, full_name, date, time_slot } = results[0];
+        const message = `Hi ${full_name}, your training session on ${date} at ${time_slot} has been accepted!`;
+
+        try {
+            await sendWhatsApp(phone, message);
+            res.json({ message: "WhatsApp alert sent" });
+        } catch (e) {
+            console.error("WhatsApp error:", e);
+            res.status(500).json({ error: "Failed to send WhatsApp message" });
+        }
     });
 });
 
