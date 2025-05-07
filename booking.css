@@ -1,129 +1,290 @@
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    background: #fff;
-    display: flex;
-    justify-content: center;
-    padding-top: 40px;
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  background: #f9f9f9;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 20px 10px 80px;
+}
+
+.calendar-container {
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  overflow: visible;
+}
+
+.calendar-header {
+  padding: 20px;
+  text-align: center;
+  background-color: #ff3b30;
+  color: white;
+}
+
+.calendar-header h1 {
+  margin: 0;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.view-switcher {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.view-switcher button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.view-switcher button:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.calendar-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+
+.calendar-controls button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #333;
+  cursor: pointer;
+}
+
+#current-label {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.calendar-view {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 15px;
+  min-height: 220px;
+}
+
+.slot {
+  background-color: #f0f0f0;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.slot:hover {
+  background-color: #ff3b30;
+  color: white;
+}
+
+.slot.booked {
+  background-color: #ccc;
+  color: #777;
+  cursor: not-allowed;
+}
+
+.slot.today {
+  background-color: #ffe5e3;
+  border: 2px solid #ff3b30;
+  font-weight: bold;
+  box-shadow: 0 0 5px rgba(255, 59, 48, 0.3);
+}
+
+.year-header,
+.year-picker {
+  padding: 20px;
+  text-align: center;
+}
+
+.year-nav {
+  font-size: 18px;
+  padding: 6px 12px;
+  background: #eee;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.year-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+  padding: 0 20px 20px;
+  justify-content: center;
+}
+
+.month-box {
+  background: #f0f0f0;
+  padding: 10px;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.month-box:hover {
+  background: #ff3b30;
+  color: white;
+}
+
+.month-box.current {
+  background: #ffe5e3;
+  border: 2px solid #ff3b30;
+  color: #ff3b30;
+}
+
+.fade {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  
-  .calendar-container {
-    width: 90%;
-    max-width: 700px;
-    background: white;
-    border-radius: 25px;
-    padding: 20px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  .calendar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+}
+
+.restriction-message {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  grid-column: 1 / -1;
+  height: 200px;
+  text-align: center;
+  font-weight: 500;
+  padding: 0 20px;
+  width: 100%;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.restriction-message span.icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.restriction-message span.text {
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+/* Select Trainer Styles */
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+button {
+  padding: 12px 20px;
+  font-size: 16px;
+  background: red;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.4s ease;
+  padding: 20px;
+  z-index: 9999;
+}
+
+.modal-content {
+  text-align: center;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+}
+
+.modal-content select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  margin: 15px 0;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.modal-actions button {
+  background-color: black;
+  padding: 10px 20px;
+  color: white;
+  border-radius: 10px;
+}
+
+.close-btn {
+  font-size: 24px;
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  cursor: pointer;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
   }
-  
-  .calendar-header h1 {
-    margin: 0;
-    font-size: 24px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  
-  .view-switcher button {
-    margin-left: 10px;
-    background: #e0e0e0;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: bold;
-  }
-  
-  .view-switcher button:hover {
-    background-color: black;
-    color: white;
-  }
-  
-  .calendar-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 20px 0;
-  }
-  
-  #current-label {
-    font-size: 18px;
-    font-weight: bold;
-  }
-  
-  .calendar-controls button {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-  }
-  
-  .calendar-view {
-    display: grid;
-    gap: 10px;
-  }
-  
-  .slot {
-    padding: 10px;
-    background-color: #f4f4f4;
-    border-radius: 12px;
-    text-align: center;
-    cursor: pointer;
-  }
-  
-  .slot:hover {
-    background-color: #dcdcdc;
-  }
-  
-  .year-header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    font-size: 20px;
-    margin-bottom: 20px;
-  }
-  
-  .year-nav {
-    background: none;
-    border: none;
-    font-size: 22px;
-    cursor: pointer;
-  }
-  
-  .year-picker {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    padding: 0 20px 20px;
-  }
-  
-  .month-box {
-    padding: 12px;
-    background: #f0f0f0;
-    border-radius: 12px;
-    text-align: center;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  
-  .month-box:hover {
-    background-color: #dcdcdc;
-  }
-  
-  /* Fade effect */
-  .fade {
-    animation: fadeIn 0.3s ease-in-out;
-  }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
+  to {
+    transform: translateY(0);
+}
+}
+
+/* Fade out animation for trainer modal */
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(50px); }
+}
+
+.fade-out {
+  animation: fadeOut 0.3s ease forwards;
+}
+/* End of Select Trainer Styles */
