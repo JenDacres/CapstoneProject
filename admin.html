@@ -110,7 +110,9 @@
               ).join("");
               content = `
                 <h2>Approve Accounts</h2>
-                <ul>${list}</ul>
+                <div class="scrollable-list">
+                  <ul>${list}</ul>
+                </div>
                 <button onclick="loadAdminPage('dashboard')">← Back</button>
               `;
               document.getElementById('adminMainContent').innerHTML = content;
