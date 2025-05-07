@@ -9,7 +9,6 @@
 </head>
 
 <body>
-
     <div class="container">
         <button class="back-button" onclick="window.history.back()">←</button>
         <form id="register-form">
@@ -24,158 +23,100 @@
             <small class="error-message" id="error-email"></small>
 
             <label for="phone">Phone Number</label>
-            <small id="phone-preview" style="font-size: 15px; color: #555; margin-top: 5px;">(e.g., 1876 for JA)</small>
+            <small id="phone-preview">(e.g., 1876 for JA)</small>
             <input type="tel" id="phone" name="phone" required />
-            <small id="phone-preview" style="font-size: 13px; color: #555; margin-top: 5px;"></small>
             <small class="error-message" id="error-phone"></small>
 
             <label for="password">Password</label>
-            <input type="password" id="password" name="password" required oninput="checkPasswordStrength(this.value)" />
+            <input type="password" id="password" name="password" required oninput="checkPasswordStrength()" />
             <small id="password-strength"></small>
             <small class="error-message" id="error-password"></small>
 
             <label for="confirm-password">Confirm Password</label>
-            <input type="password" id="confirm-password" name="confirm_password" required oninput="checkPasswordMatch()" />
+            <input type="password" id="confirm-password" name="confirm_password" required
+                oninput="checkPasswordMatch()" />
             <small class="error-message" id="error-confirm"></small>
-
 
             <button type="submit" class="submit-button">Continue</button>
         </form>
         <p>Already registered? <a href="LoginScreen.html">Click here to login</a></p>
         <div id="success-message" class="success-message"></div>
-
     </div>
-    <script>
-        const form = document.getElementById("register-form");
-        const successDiv = document.getElementById("success-message");
-        const passwordStrengthEl = document.getElementById("password-strength");
-        const passwordE1 = document.getElementById("password");
-        const confirmPasswordE1 = document.getElementById("confirm-password");
-        const errorPasswordE1 = document.getElementById("error-password");
-        const errorConfirmE1 = document.getElementById("error-confirm");
-        let redirectTimer = null;
 
-        form.addEventListener("submit", async function (event) {
-            event.preventDefault();
+    <script>document.addEventListener("DOMContentLoaded", () => {
+            const form = document.getElementById("register-form");
+            const successDiv = document.getElementById("success-message");
 
-            document.querySelectorAll(".error-message").forEach(e => e.textContent = "");
-            document.querySelectorAll("input, select").forEach(el => el.classList.remove("invalid"));
-            successDiv.textContent = "";
-            successDiv.classList.remove("visible");
-
-            const full_name = form.full_name.value.trim();
-            const email = form.email.value.trim();
-
-            const phone = form.phone.value.trim();
-            const fullPhone = `+${phone}`;  // ✅ Properly formatted phone
-            const password = form.password.value;
-
-            let valid = true;
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            const phoneRegex = /^\d{6,15}$/;
-
-            if (full_name.length < 3) {
-                showError("full-name", "Full name must be at least 3 characters.");
-                valid = false;
+            // ✅ Auto-fill saved data
+            const savedData = JSON.parse(localStorage.getItem("userData"));
+            if (savedData) {
+                document.getElementById("full-name").value = savedData.full_name;
+                document.getElementById("email").value = savedData.email;
+                document.getElementById("phone").value = savedData.phone;
             }
 
-            if (!emailRegex.test(email)) {
-                showError("email", "Please enter a valid email address.");
-                valid = false;
-            }
+            form.addEventListener("submit", async function (event) {
+                event.preventDefault();
+                document.querySelectorAll(".error-message").forEach(e => e.textContent = "");
 
-            if (email.length < 5) {
-                showError("email", "Email must be at least 5 characters.");
-                valid = false;
-            }
+                const full_name = form.full_name.value.trim();
+                const email = form.email.value.trim();
+                const phone = form.phone.value.trim();
+                const fullPhone = `+${phone}`;
+                const password = form.password.value;
 
-            if (!phoneRegex.test(phone)) {
-                showError("phone", "Phone number must be 6 to 15 digits.");
-                valid = false;
-            }
+                // ✅ Save to local storage
+                const userData = { full_name, email, phone: fullPhone, password };
+                localStorage.setItem("userData", JSON.stringify(userData));
 
-            if (password.length < 6) {
-                showError("password", "Password must be at least 6 characters.");
-                valid = false;
-            }
+                try {
+                    const res = await fetch("http://localhost:5000/register", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(userData)
+                    });
 
-            if (!valid) return;
+                    const result = await res.json();
 
-            try {
-                const res = await fetch("http://localhost:5000/register", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ full_name, email, phone: fullPhone, password }) // ✅ sending formatted phone
-                });
-
-                const result = await res.json();
-
-                if (res.ok) {
-                    form.reset();
-                    passwordStrengthEl.textContent = "";
-                    successDiv.textContent = `✅ ${result.message} ${result.user_id ? `Your ID: ${result.user_id}` : ""}`;
-                    successDiv.classList.add("visible");
-                    redirectTimer = setTimeout(() => {
-                        window.location.href = "member.html"; // Redirect to member page after 3 seconds
-                    }, 3000);
-                } else {
-                    alert(result.error || result.message || "Registration failed."); // ✅ Show real backend error
+                    if (res.ok) {
+                        form.reset();
+                        localStorage.removeItem("userData");
+                        successDiv.textContent = `✅ ${result.message}`;
+                        successDiv.classList.add("visible");
+                        setTimeout(() => window.location.href = "member.html", 3000);
+                    } else {
+                        alert(result.error || "Registration failed.");
+                    }
+                } catch (err) {
+                    alert("An error occurred during registration.");
                 }
-            } catch (err) {
-                alert("An error occurred during registration.");
-            }
+            });
         });
 
-
-        function showError(fieldId, message) {
-            const field = document.getElementById(fieldId);
-            const errorMsg = document.getElementById("error-" + fieldId);
-            if (field && errorMsg) {
-                field.classList.add("invalid");
-                errorMsg.textContent = message;
-            }
-        }
-
-        function checkPasswordStrength(password) {
+        // ✅ Password Strength Check
+        function checkPasswordStrength() {
+            const password = document.getElementById("password").value;
             const strength = getStrength(password);
-            passwordStrengthEl.textContent = strength.label;
-            passwordStrengthEl.className = strength.class;
-
-            if (password.length < 6) {
-                errorPasswordE1.textContent = "Password must be at least 6 characters.";
-            } else {
-                errorPasswordE1.textContent = "";
-            }
-
-            checkPasswordMatch();
+            document.getElementById("password-strength").textContent = strength.label;
+            document.getElementById("password-strength").className = strength.class;
         }
 
+        // ✅ Password Match Check
+        function checkPasswordMatch() {
+            const password = document.getElementById("password").value;
+            const confirm = document.getElementById("confirm-password").value;
+            document.getElementById("error-confirm").textContent = password === confirm ? "" : "Passwords do not match.";
+        }
+
+        // ✅ Password Strength Logic
         function getStrength(password) {
             if (password.length < 6) return { label: "Too short", class: "weak" };
             const strong = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
             const medium = /^(?=.*[a-z])(?=.*\d)[A-Za-z\d]{6,}$/;
-
             if (strong.test(password)) return { label: "Strong password", class: "strong" };
             if (medium.test(password)) return { label: "Medium strength", class: "medium" };
             return { label: "Weak password", class: "weak" };
-        }
-
-        function checkPasswordMatch() {
-            const password = passwordE1.value;
-            const confirm = confirmPasswordE1 ? confirmPasswordE1.value : "";
-            if (confirm && password !== confirm) {
-                errorConfirmE1.textContent = "Passwords do not match.";
-            } else {
-                errorConfirmE1.textContent = "";
-            }
-        }
-
-        if (confirmPasswordE1) {
-            confirmPasswordE1.addEventListener("input", checkPasswordMatch);
-        }
-    </script>
-
-
+        }</script>
 </body>
 
 </html>

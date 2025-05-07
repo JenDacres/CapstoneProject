@@ -19,7 +19,7 @@ const io = new Server(server, {
     cors: {
         origin: "*",
         methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
+        credentials: true,
     }
 });
 
@@ -48,17 +48,29 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+// Configure Multer Storage
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, "uploads/");
-    },
+    destination: "./uploads/profile_pics", // Folder to store uploaded files
     filename: (req, file, cb) => {
-        const uniqueName = Date.now() + path.extname(file.originalname);
-        cb(null, uniqueName);
-    }
+        cb(null, `${Date.now()}-${file.originalname}`);
+    },
 });
-const upload = multer({ storage: storage });
 
+// File Upload Settings
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // Max file size: 5MB
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error("Only JPEG, PNG, and JPG images are allowed"));
+        }
+    },
+});
+
+// Email sending function
 function sendEmail(to, subject, text) {
     const mailOptions = {
         from: process.env.EMAIL_USER,
@@ -91,95 +103,170 @@ function generateRandomPassword(length = 10) {
 }
 
 
-function generateUserId(role, insertId) {
-    const rolePrefix = {
-        Member: 'M',
-        Trainer: 'T',
-        Administrator: 'A'
-    };
-    return rolePrefix[role] + insertId; // e.g., M101
+// Generate user_id based on role and AUTO_INCREMENT value
+function generateUserId(role, nextId) {
+    const rolePrefix = { Member: "M", Trainer: "T", Administrator: "A" };
+    return rolePrefix[role] + nextId;  // e.g., M101
 }
 
 
+// Generate JWT Token (expires in 1 hour)
+function generateToken(user) {
+    return jwt.sign(
+        { userId: user.id, role: user.role },
+        process.env.JWT_SECRET || "secretkey",
+        { expiresIn: "1h" } //  Token expires in 1 hour
+    );
+}
 
+//  Generate Refresh Token (expires in 7 days)
+function generateRefreshToken(user) {
+    return jwt.sign(
+        { userId: user.id },
+        process.env.REFRESH_SECRET || "refreshkey",
+        { expiresIn: "7d" } //  Refresh token lasts 7 days
+    );
+}
+
+
+// Middleware to Authenticate Token
 function authenticateToken(req, res, next) {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
-    if (!token) return res.sendStatus(401);
+
+    if (!token) return res.status(401).json({ message: "Authorization token required" });
+
     jwt.verify(token, process.env.JWT_SECRET || "secretkey", (err, user) => {
-        if (err) return res.sendStatus(403);
+        if (err) return res.status(403).json({ message: "Invalid token" });
         req.user = user;
         next();
     });
 }
+
+
+// Refresh Token Route
+app.post("/refresh-token", (req, res) => {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(401).json({ message: "Refresh token required" });
+
+    jwt.verify(refreshToken, process.env.REFRESH_SECRET || "refreshkey", (err, user) => {
+        if (err) return res.status(403).json({ message: "Invalid refresh token" });
+
+        const newToken = generateToken(user);
+        res.json({ token: newToken });
+    });
+});
 
 // --- ROUTES ---
 
 // Registration
 app.post("/register", (req, res) => {
     const { full_name, email, phone, password } = req.body;
-    const role = "Member"; // Default role
-    const formattedPhone = `+${phone.replace(/\D/g, "")}`; // Clean phone number
+    const role = "Member"; // Default role for new users
+    const formattedPhone = `+${phone.replace(/\D/g, "")}`;
 
-    // Step 1: Hash password
+    // Hash password
     bcrypt.hash(password, 10, (err, hash) => {
         if (err) return res.status(500).json({ error: "Password hashing failed" });
 
-        // Step 2: Get next AUTO_INCREMENT value
-        const getNextIdSql = `
-            SELECT AUTO_INCREMENT 
-            FROM information_schema.TABLES 
-            WHERE TABLE_SCHEMA = 'myuwigym' AND TABLE_NAME = 'users'
-        `;
-        db.query(getNextIdSql, (err2, results) => {
-            if (err2 || results.length === 0) {
-                return res.status(500).json({ error: "Failed to generate user ID" });
-            }
+        // Get Max ID and Increment
+        db.query("SELECT MAX(id) AS max_id FROM users", (err2, results) => {
+            if (err2 || results.length === 0) return res.status(500).json({ error: "Failed to generate user ID" });
 
-            const nextId = results[0].AUTO_INCREMENT;
-            const newUserId = generateUserId(role, nextId); // e.g., M101
+            const nextId = (results[0].max_id || 0) + 1; // Proper ID increment
+            const newUserId = generateUserId(role, nextId);
 
-            // Step 3: Insert user WITH user_id
+            //  Insert New User with Generated ID
             const insertSql = `
                 INSERT INTO users (user_id, full_name, email, role, phone, password_hash)
                 VALUES (?, ?, ?, ?, ?, ?)
             `;
             db.query(insertSql, [newUserId, full_name, email, role, formattedPhone, hash], (err3, result) => {
-                if (err3) {
-                    return res.status(500).json({ error: err3.sqlMessage });
-                }
-                //Email of pending status
-                sendEmail(
-                    email,
-                    "MYUWIGYM Registration Pending",
-                    `Hello ${full_name}, thanks for signing up! Your details are pending review.`
-                ).then(() => {
-                    res.json({ message: "User registered successfully!", user_id: newUserId });
-                }).catch(emailErr => {
-                    console.error("Email sending failed:", emailErr);
-                    res.json({ message: "User registered successfully, but email could not be sent.", user_id: newUserId });
-                });
+                if (err3) return res.status(500).json({ error: err3.sqlMessage });
+
+                res.json({ message: "User registered successfully!", user_id: newUserId });
             });
         });
     });
 });
 
 
-// Login
+// Profile Picture Upload 
+app.post("/update-profile-picture", upload.single("profile_picture"), (req, res) => {
+    console.log("User data:", req.user);
+    if (!req.user || !req.user.user_id) {
+        return res.status(400).json({ message: "User not authenticated" });
+    }
+    if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    try {
+        // Generate profile picture URL (assuming static file serving)
+        const fileUrl = `/uploads/profile_pics/${req.file.filename}`;
+
+        // Update profile picture in Database (Example SQL)
+        const updateQuery = `UPDATE users SET profile_picture = $1 WHERE user_id = $2 RETURNING *`;
+        const values = [fileUrl, req.user.user_id]; // Ensure `req.user` contains authenticated user info
+
+        // Execute DB query (pseudo-code)
+        db.query(updateQuery, values, (err, result) => {
+            if (err) {
+                return res.status(500).json({ message: "Database update failed" });
+            }
+            res.status(200).json({ message: "Profile picture updated successfully", profile_picture: fileUrl });
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Serve Static Profile Pictures
+app.use("/uploads/profile_pics", express.static(path.join(__dirname, "uploads/profile_pics")));
+
+
+// Login Route
 app.post("/login", (req, res) => {
     const { email, password } = req.body;
+
     db.query("SELECT * FROM users WHERE email = ?", [email], (err, results) => {
         if (err) return res.status(500).json({ message: "Server error" });
         if (results.length === 0) return res.status(401).json({ message: "Incorrect email or password" });
 
         const user = results[0];
         bcrypt.compare(password, user.password_hash, (err, match) => {
+            if (err) return res.status(500).json({ message: "Password verification error" });
             if (!match) return res.status(401).json({ message: "Incorrect email or password" });
 
-            const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET || "secretkey");
-            res.json({ message: "Login successful", role: user.role, user_id: user.user_id, token });
+            const token = generateToken(user);
+            const refreshToken = generateRefreshToken(user);
+
+            res.json({
+                message: "Login successful",
+                role: user.role,
+                user_id: user.user_id,
+                full_name: user.full_name,
+                token,
+                refreshToken
+            });
         });
     });
+});
+
+app.get('/api/member/profile', (req, res) => {
+    try {
+        const userId = req.user.id;
+        const [rows] = db.query('SELECT id, full_name FROM members WHERE id = ?', [userId]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json(rows[0]); // Return the user's full_name and id
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
 });
 
 
@@ -214,7 +301,7 @@ app.post("/send-alert", async (req, res) => {
     });
 });
 
-
+// Get all bookings for a user
 app.get("/my-bookings", authenticateToken, (req, res) => {
     db.query("SELECT * FROM bookings WHERE user_id = ?", [req.user.userId], (err, results) => {
         if (err) return res.status(500).send(err);
@@ -222,6 +309,7 @@ app.get("/my-bookings", authenticateToken, (req, res) => {
     });
 });
 
+// Delete booking
 app.delete("/cancel-booking/:id", authenticateToken, (req, res) => {
     db.query("DELETE FROM bookings WHERE id = ? AND user_id = ?", [req.params.id, req.user.userId], (err, result) => {
         if (err) return res.status(500).send(err);
@@ -232,25 +320,39 @@ app.delete("/cancel-booking/:id", authenticateToken, (req, res) => {
 // Check-in
 app.post("/check-in", authenticateToken, (req, res) => {
     const userId = req.user.userId;
-    db.query("SELECT COUNT(*) AS occupancy FROM gym_visits WHERE check_out IS NULL", (err, result) => {
-        if (result[0].occupancy >= 25) return res.status(403).json({ message: "Gym is full" });
 
-        db.query("SELECT * FROM gym_visits WHERE user_id = ? AND check_out IS NULL", [userId], (err, result) => {
-            if (result.length > 0) return res.status(400).json({ message: "Already checked in" });
+    db.query("SELECT COUNT(*) AS occupancy FROM checkins WHERE status = 'active'", (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (result[0].occupancy >= 25) {
+            return res.status(403).json({ message: "Gym is full" });
+        }
 
-            db.query("INSERT INTO gym_visits (user_id) VALUES (?)", [userId], (err) => {
+        db.query("SELECT * FROM checkins WHERE user_id = ? AND status = 'active'", [userId], (err, result) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (result.length > 0) {
+                return res.status(400).json({ message: "Already checked in" });
+            }
+
+            const expectedCheckout = new Date(Date.now() + 45 * 60 * 1000); // 45 mins later
+            db.query("INSERT INTO checkins (user_id, expected_checkout_time) VALUES (?, ?)", [userId, expectedCheckout], (err) => {
                 if (err) return res.status(500).json({ error: err.message });
+
                 db.query("SELECT full_name, role FROM users WHERE id = ?", [userId], (err, result) => {
-                    io.emit("checkin", { userId, full_name: result[0].full_name, role: result[0].role });
+                    if (!err && result.length) {
+                        io.emit("checkin", { userId, full_name: result[0].full_name, role: result[0].role });
+                    }
                 });
+
                 res.json({ message: "Check-in successful" });
 
                 setTimeout(() => {
-                    db.query("UPDATE gym_visits SET check_out = CURRENT_TIMESTAMP WHERE user_id = ? AND check_out IS NULL", [userId]);
+                    db.query("UPDATE checkins SET status = 'completed' WHERE user_id = ? AND status = 'active'", [userId]);
                     db.query("SELECT phone, full_name, role FROM users WHERE id = ?", [userId], (err, result) => {
-                        const { phone, full_name, role } = result[0];
-                        io.emit("checkout", { userId, full_name, role });
-                        sendWhatsApp(phone, "Your gym session has ended. Thank you!");
+                        if (!err && result.length) {
+                            const { phone, full_name, role } = result[0];
+                            io.emit("checkout", { userId, full_name, role });
+                            sendWhatsApp(phone, "Your gym session has ended. Thank you!");
+                        }
                     });
                 }, 45 * 60 * 1000);
             });
@@ -258,11 +360,14 @@ app.post("/check-in", authenticateToken, (req, res) => {
     });
 });
 
-
 // Live occupancy
 app.get("/live-occupancy", (req, res) => {
-    db.query("SELECT COUNT(*) AS occupancy FROM gym_visits WHERE check_out IS NULL", (err, result) => {
-        res.json({ occupancy: result[0].occupancy });
+    db.query("SELECT COUNT(*) AS occupancy FROM checkins WHERE status = 'active'", (err, result) => {
+        if (err) {
+            console.error("Error fetching occupancy:", err);
+            return res.json({ occupancy: 0 }); // Return zero if there's an error
+        }
+        res.json({ occupancy: result[0]?.occupancy || 0 }); // Default to 0 if no result
     });
 });
 
@@ -521,18 +626,6 @@ app.post("/admin/approve-user", (req, res) => {
     });
 });
 
-// Update Profile Picture
-app.post("/update-profile-picture", authenticateToken, upload.single("profile_picture"), (req, res) => {
-    const userId = req.user.userId;
-    if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded." });
-    }
-    const profilePicUrl = req.file.filename;
-    db.query("UPDATE users SET profile_image = ? WHERE user_id = ?", [profilePicUrl, userId], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: "Profile picture updated successfully!" });
-    });
-});
 
 // Change Password
 app.post("/change-password", authenticateToken, (req, res) => {

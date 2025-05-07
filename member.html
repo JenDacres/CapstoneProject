@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="chatbox.css">
 
-
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -47,7 +46,6 @@
       text-align: left;
     }
 
-    /* Bottom Navigation */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -72,7 +70,6 @@
       color: #d32f2f;
     }
 
-    /* Floating + Button */
     .floating-plus {
       position: fixed;
       bottom: 75px;
@@ -97,7 +94,6 @@
       cursor: pointer;
     }
 
-    /* Bounce Animation */
     @keyframes bounce {
 
       0%,
@@ -117,7 +113,6 @@
       }
     }
 
-    /* Chat Toggle Button */
     .chat-toggle {
       position: fixed;
       bottom: 140px;
@@ -135,7 +130,6 @@
       animation: slideUp 1.5s ease forwards;
     }
 
-    /* Slide Up Animation */
     @keyframes slideUp {
       from {
         opacity: 0;
@@ -148,7 +142,6 @@
       }
     }
 
-    /* Chatbox */
     .chatbox {
       position: fixed;
       bottom: 200px;
@@ -207,18 +200,16 @@
   </style>
 </head>
 
-<<body onload="loadPage('homepage')">
+<body onload="loadPage()">
 
   <div class="container" id="main-content">
     <!-- Dynamic content will load here -->
   </div>
 
-  <!-- Floating Red Button -->
   <div class="floating-plus">
     <button id="bookBtn" class="add-button"><i class="fas fa-plus"></i></button>
   </div>
 
-  <!-- Bottom Navigation -->
   <nav class="bottom-nav">
     <button id="homeBtn" title="Home"><i class="fas fa-home"></i></button>
     <button id="manageBtn" title="Manage"><i class="fas fa-calendar-alt"></i></button>
@@ -226,47 +217,67 @@
     <button id="settingsBtn" title="Settings"><i class="fas fa-cog"></i></button>
   </nav>
 
-  <!-- Chatbox Toggle -->
   <button class="chat-toggle" onclick="toggleChat()">💬</button>
 
   <div class="chatbox">
-    <div class="chatbox-header" data-i18n="assistant">
+    <div class="chatbox-header">
       MyUWIGym Assistant
       <button onclick="toggleChat()">❌</button>
     </div>
     <div class="chatbox-messages"></div>
     <div class="chatbox-input">
-      <input type="text" placeholder="" id="userInput" data-i18n="askSomething" />
-      <button onclick="sendMessage()" data-i18n="send">Send</button>
+      <input type="text" placeholder="Ask something..." id="userInput" />
+      <button onclick="sendMessage()">Send</button>
     </div>
   </div>
 
-  <script src="translations.js"></script>
-  <script src="language.js" defer></script>
   <script>
-    function loadPage(pageId) {
-      let userName = localStorage.getItem("full_name") || "Loading";
-      let content = '';
+    function getGreeting() {
+      const hour = new Date().getHours();
+      if (hour < 12) return "Good morning";
+      else if (hour < 18) return "Good afternoon";
+      else return "Good evening";
+    }
 
-      if (pageId === 'homepage') {
-        content = `
-          <img src="profile-placeholder.png" class="profile-pic" alt="Profile Picture">
-          <h1 data-i18n="welcome">${translateText('welcome', { name: userName })}</h1>
-          <p style="font-size: 14px; color: gray;">ID: ${localStorage.getItem("user_id") || "N/A"}</p>
+    async function loadPage() {
+      let userName = localStorage.getItem("full_name") || "Member";
+      let profilePicUrl = localStorage.getItem("profile_picture") || "profile-placeholder.png";
+      let weather = await getWeather();
+      let greeting = getGreeting();
 
-          <div class="plan-box">
-            <strong data-i18n="myPlan">🏋‍♂ My Plan for Today</strong><br>
-            <span id="occupancyText" data-i18n="loadingOccupancy">Loading current occupancy...</span>
-          </div>
+      let content = `
+        <img src="${profilePicUrl}" class="profile-pic" alt="Profile Picture">
+        <p style="font-size: 14px; color: gray;">ID: ${localStorage.getItem("user_id") || "N/A"}</p>
+        <h1>${greeting}, ${userName}. It is currently ${weather} at the UWI Gym.</h1>
 
-          <div class="activity-box">
-            <strong data-i18n="upcomingSessions">📅 Upcoming Sessions</strong><br>
-            <span id="activityText" data-i18n="loadingSessions">Loading sessions...</span>
-          </div>
-        `;
-      }
+        <div class="plan-box">
+            <strong>🏋‍♂ My Plan for Today</strong><br>
+            <span id="occupancyText">Loading current occupancy...</span>
+        </div>
+
+        <div class="activity-box">
+            <strong>📅 Upcoming Sessions</strong><br>
+            <span id="activityText">Loading sessions...</span>
+        </div>
+      `;
+
       document.getElementById('main-content').innerHTML = content;
-      translatePage();
+    }
+
+    async function getWeather() {
+      const apiKey = "b5b96ca094a981dbe2c2b7926a538c8a"; // Replace with a valid key
+      const lat = 18.0120;
+      const lon = -76.7970;
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        return data.weather[0].description;
+      } catch (error) {
+        console.error("Weather fetch failed:", error);
+        return "Unavailable";
+      }
     }
 
     function toggleChat() {
@@ -274,13 +285,22 @@
       chat.style.display = (chat.style.display === 'none' || chat.style.display === '') ? 'block' : 'none';
     }
 
-    // Navigation buttons
-    document.getElementById("homeBtn").addEventListener("click", () => loadPage('homepage'));
+    function sendMessage() {
+      const input = document.getElementById('userInput');
+      if (input.value.trim() === "") return;
+      const messageBox = document.querySelector('.chatbox-messages');
+      messageBox.innerHTML += `<div><strong>You:</strong> ${input.value}</div>`;
+      input.value = '';
+      messageBox.scrollTop = messageBox.scrollHeight;
+    }
+
+    // Navigation button event listeners
+    document.getElementById("homeBtn").addEventListener("click", () => loadPage());
     document.getElementById("manageBtn").addEventListener("click", () => window.location.href = "manage_bookings.html");
     document.getElementById("bookBtn").addEventListener("click", () => window.location.href = "booking.html");
     document.getElementById("messagesBtn").addEventListener("click", () => toggleChat());
     document.getElementById("settingsBtn").addEventListener("click", () => window.location.href = "member_settings.html");
   </script>
-  </body>
+</body>
 
 </html>

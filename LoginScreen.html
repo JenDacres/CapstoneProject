@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MYUWIGYM | Login</title>
   <link rel="stylesheet" href="LoginScreen.css" />
 </head>
+
 <body>
   <div class="login-container">
     <h2>Login</h2>
@@ -34,34 +36,62 @@
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
 
-      const response = await fetch("http://localhost:5000/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
+      try {
+        const response = await fetch("http://localhost:5000/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (response.ok) {
-        switch (data.role) {
-          case "Member":
-            window.location.href = "member.html";
-            break;
-          case "Trainer":
-            window.location.href = "trainer.html";
-            break;
-          case "Administrator":
-            window.location.href = "admin.html";
-            break;
-          default:
-            alert("Unknown role");
+        if (response.ok) {
+          sessionStorage.setItem("token", data.token);
+          sessionStorage.setItem("refreshToken", data.refreshToken);
+          sessionStorage.setItem("user_id", data.user_id);
+          sessionStorage.setItem("full_name", data.full_name);
+
+          const roleRedirect = {
+            "Member": "member.html",
+            "Trainer": "trainer.html",
+            "Administrator": "admin.html",
+          };
+
+          window.location.href = roleRedirect[data.role] || "error.html";
+        } else {
+          showError(data.message || "Login failed. Please try again.");
         }
-      } else {
-        const errorDiv = document.getElementById("error-message");
-        errorDiv.style.display = "block";
-        errorDiv.textContent = data.message || "Login failed. Please try again.";
+      } catch (err) {
+        showError("Network error. Please check your connection.");
       }
     });
+
+    // Automatically Refresh Token When Expired
+    async function refreshToken() {
+      const refreshToken = sessionStorage.getItem("refreshToken");
+      if (!refreshToken) return console.error("No refresh token found");
+
+      try {
+        const response = await fetch("http://localhost:5000/refresh-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          sessionStorage.setItem("token", data.token); // ✅ Update token
+        } else {
+          console.error("Failed to refresh token");
+        }
+      } catch (err) {
+        console.error("Error refreshing token:", err);
+      }
+    }
+
+    // ✅ Periodically Refresh Token (Every 55 mins)
+    setInterval(refreshToken, 55 * 60 * 1000);
   </script>
 </body>
+
 </html>

@@ -26,6 +26,18 @@ CREATE TABLE bookings (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE  -- Fixed foreign key reference
 );
 
+-- Checkins Table
+-- This table tracks user check-ins to the gym
+CREATE TABLE checkins (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    checkin_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expected_checkout_time DATETIME,
+    status ENUM('active', 'completed') DEFAULT 'active',
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+
 -- Live Occupancy Table
 -- This table tracks the number of users in the gym at any given time
 -- It is updated in real-time and can be used to manage capacity
@@ -75,3 +87,5 @@ CREATE TABLE reports (
 ALTER TABLE users
 ADD COLUMN monthly_visits INT DEFAULT 0,
 ADD COLUMN last_reset_month INT DEFAULT MONTH(CURRENT_DATE);
+
+ALTER TABLE users ADD COLUMN profile_picture VARCHAR(255);
