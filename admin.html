@@ -24,31 +24,30 @@
           content = `
             <div class="button-container">
               <button onclick="loadAdminPage('addTrainer')">Add Trainer</button>
+              <button onclick="window.location.href='check_in.html'">Check-In User</button>
               <button onclick="loadAdminPage('sendAlerts')">Send Alerts</button>
               <button onclick="loadAdminPage('viewReports')">View Reports</button>
               <button onclick="loadAdminPage('manageBookings')">Manage Bookings</button>
-              <button onclick="window.location.href='competitions_admin.html'">Competitions</button>
               <button onclick="window.location.href='liveoccupancy-a.html'">Live Occupancy</button>
               <button onclick="loadAdminPage('approveAccounts')">Approve Accounts</button>
             </div>
           `;
           document.getElementById('adminMainContent').innerHTML = content;
           break;
-        
-          case 'addTrainer':
-            content = `
-              <h2>Add Trainer</h2>
-              <input type="text" id="firstName" placeholder="First Name" required />
-              <input type="text" id="lastName" placeholder="Last Name" required />
-              <input type="email" id="email" placeholder="Email" required />
-              <div class="button-container">
-                <button onclick="createTrainer()">Create Trainer</button>
-                <button onclick="loadAdminPage('dashboard')">← Back</button>
-              </div>
-            `;
-            document.getElementById('adminMainContent').innerHTML = content;
-            break;
 
+        case 'addTrainer':
+          content = `
+            <h2>Add Trainer</h2>
+            <input type="text" id="firstName" placeholder="First Name" required />
+            <input type="text" id="lastName" placeholder="Last Name" required />
+            <input type="email" id="email" placeholder="Email" required />
+            <div class="button-container">
+              <button onclick="createTrainer()">Create Trainer</button>
+              <button onclick="loadAdminPage('dashboard')">← Back</button>
+            </div>
+          `;
+          document.getElementById('adminMainContent').innerHTML = content;
+          break;
 
         case 'sendAlerts':
           content = `
@@ -153,31 +152,30 @@
     }
 
     function createTrainer() {
-        const firstName = document.getElementById('firstName').value.trim();
-        const lastName = document.getElementById('lastName').value.trim();
-        const email = document.getElementById('email').value.trim();
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+      const email = document.getElementById('email').value.trim();
 
-        if (!firstName || !lastName || !email) {
-          alert("Please fill in all fields.");
-          return;
-        }
-
-        fetch("http://localhost:5000/admin/add-trainer", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ firstName, lastName, email })
-        })
-          .then(res => res.json())
-          .then(data => {
-            alert(data.message);
-            loadAdminPage('dashboard');
-          })
-          .catch(err => {
-            console.error(err);
-            alert("Failed to create trainer.");
-          });
+      if (!firstName || !lastName || !email) {
+        alert("Please fill in all fields.");
+        return;
       }
 
+      fetch("http://localhost:5000/admin/add-trainer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ firstName, lastName, email })
+      })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message);
+          loadAdminPage('dashboard');
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Failed to create trainer.");
+        });
+    }
   </script>
 </body>
 </html>
