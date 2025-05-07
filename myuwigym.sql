@@ -3,7 +3,7 @@
 
 -- Users Table
 -- This table stores user information including their role and hashed password
--- The user_id is auto-generated in a specific format (e.g., M-001)
+-- The user_id is auto-generated in a specific format (e.g., M-12345 for Member, T-1234 for Trainer, A-123 for Administrator)
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     user_id VARCHAR(20) UNIQUE NOT NULL,  -- Auto-generated formatted ID

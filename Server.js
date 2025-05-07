@@ -19,7 +19,7 @@ const io = new Server(server, {
     cors: {
         origin: "*",
         methods: ["GET", "POST", "PUT", "DELETE"],
-        credentials: true,
+    credentials: true,
     }
 });
 
@@ -451,6 +451,18 @@ app.get("/admin/bookings", (req, res) => {
     });
 });
 
+//Member - Report an issue
+app.post("/report-issue", authenticateToken, upload.single("image"), (req, res) => {
+    const userId = req.user.userId;
+    const { report } = req.body;
+    const imagePath = req.file ? req.file.filename : null; // Save image path if uploaded
+
+    const sql = "INSERT INTO reports (user_id, message, image_path) VALUES (?, ?, ?)";
+    db.query(sql, [userId, report, imagePath], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: "Report submitted successfully!" });
+    });
+});
 
 // Admin - View user reports
 app.get("/admin/reports", (req, res) => {

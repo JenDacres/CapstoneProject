@@ -274,14 +274,6 @@
       chat.style.display = (chat.style.display === 'none' || chat.style.display === '') ? 'block' : 'none';
     }
 
-    function sendMessage() {
-      const input = document.getElementById('userInput');
-      const message = input.value.trim();
-      if (!message) return;
-      alert("Sent: " + message);
-      input.value = "";
-    }
-
     // Navigation buttons
     document.getElementById("homeBtn").addEventListener("click", () => loadPage('homepage'));
     document.getElementById("manageBtn").addEventListener("click", () => window.location.href = "manage_bookings.html");
