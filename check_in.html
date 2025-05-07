@@ -1,57 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Gym Check In</title>
-  <style>
-    #checkin-form {
-      display: none;
-      margin-top: 10px;
-    }
-  </style>
-</head>
-<body>
-  <button id="open-checkin">Check In</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Check In</title>
+    <link rel="stylesheet" href="trainer.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  </head>
 
-  <div id="checkin-form">
-    <p>Enter Your ID Number:</p>
-    <input type="text" id="user-id" placeholder="e.g. 100123456" />
-    <button id="submit-checkin">Submit</button>
-    <p id="status-msg"></p>
-  </div>
+  <body>
+    <div class="trainer-container">
+      <h2>Check-In</h2>
 
-  <script>
-    document.getElementById('open-checkin').addEventListener('click', () => {
-      document.getElementById('checkin-form').style.display = 'block';
-    });
+      <div class="form-group">
+        <label for="user-id">Enter Your ID Number:</label>
+        <input type="text" id="user-id" placeholder="e.g. 100123456" />
+      </div>
 
-    document.getElementById('submit-checkin').addEventListener('click', async () => {
-      const userId = document.getElementById('user-id').value.trim();
+      <div class="form-actions">
+        <button id="submit-checkin">Submit</button>
+        <button class="back-btn" onclick="window.location.href='admin.html'">Back to Dashboard</button>
+      </div>
 
-      if (!userId) {
-        alert('Please enter your ID number.');
-        return;
-      }
+      <p id="status-msg" class="status-message"></p>
+    </div>
 
-      const response = await fetch('/api/checkin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId })
+    <script>
+      document.getElementById('submit-checkin').addEventListener('click', async () => {
+        const userId = document.getElementById('user-id').value.trim();
+
+        if (!userId) {
+          alert('Please enter your ID number.');
+          return;
+        }
+
+        const response = await fetch('/api/checkin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId })
+        });
+
+        const data = await response.json();
+        document.getElementById('status-msg').innerText = data.message;
+
+        if (response.ok) {
+          setTimeout(() => {
+            fetch('/api/checkout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user_id: userId })
+            });
+          }, 3600000); // 1 hour
+        }
       });
-
-      const data = await response.json();
-      document.getElementById('status-msg').innerText = data.message;
-
-      if (response.ok) {
-        setTimeout(() => {
-          fetch('/api/checkout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId })
-          });
-        }, 3600000); // 1 hour in milliseconds
-      }
-    });
-  </script>
-</body>
+    </script>
+  </body>
 </html>
