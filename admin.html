@@ -27,7 +27,7 @@
               <button onclick="window.location.href='check_in.html'">Check-In User</button>
               <button onclick="loadAdminPage('sendAlerts')">Send Alerts</button>
               <button onclick="loadAdminPage('viewReports')">View Reports</button>
-              <button onclick="loadAdminPage('manageBookings')">Manage Bookings</button>
+              <button onclick="loadAdminPage('viewBookings')">Manage Bookings</button>
               <button onclick="window.location.href='liveoccupancy-a.html'">Live Occupancy</button>
               <button onclick="loadAdminPage('approveAccounts')">Approve Accounts</button>
             </div>
@@ -82,7 +82,7 @@
             });
           break;
 
-        case 'manageBookings':
+        case 'viewBookings':
           fetch("http://localhost:5000/admin/bookings")
             .then(res => res.json())
             .then(data => {
