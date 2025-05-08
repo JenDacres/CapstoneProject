@@ -1,39 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Check In</title>
-    <link rel="stylesheet" href="trainer.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Check In</title>
+  <link rel="stylesheet" href="trainer.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
 
-  <body>
-    <div class="trainer-container">
-      <h2>Check-In</h2>
+<body>
+  <div class="trainer-container">
+    <h2>Check-In</h2>
 
-      <div class="form-group">
-        <label for="user-id">Enter Your ID Number:</label>
-        <input type="text" id="user-id" placeholder="e.g. 100123456" />
-      </div>
+    <!-- Show current count -->
+    <p>Live Occupancy: <span id="active-count">0</span></p>
 
-      <div class="form-actions">
-        <button id="submit-checkin">Submit</button>
-        <button class="back-btn" onclick="window.location.href='admin.html'">Back to Dashboard</button>
-      </div>
-
-      <p id="status-msg" class="status-message"></p>
+    <div class="form-group">
+      <label for="user-id">Enter Your ID Number:</label>
+      <input type="text" id="user-id" placeholder="e.g. 1001" />
     </div>
 
-    <script>
-      document.getElementById('submit-checkin').addEventListener('click', async () => {
-        const userId = document.getElementById('user-id').value.trim();
+    <div class="form-actions">
+      <button id="submit-checkin">Submit</button>
+      <button class="back-btn" onclick="window.location.href='admin.html'">Back to Dashboard</button>
+    </div>
 
-        if (!userId) {
-          alert('Please enter your ID number.');
-          return;
-        }
+    <p id="status-msg" class="status-message"></p>
+  </div>
 
+  <script>
+    // Fetch current check-in count
+    async function updateActiveCount() {
+      try {
+        const res = await fetch('/api/active-count');
+        const data = await res.json();
+        document.getElementById('active-count').innerText = data.count;
+      } catch (error) {
+        console.error('Error fetching active count:', error);
+      }
+    }
+
+    // Call it on load and every 30 seconds
+    updateActiveCount();
+    setInterval(updateActiveCount, 30000);
+
+    // Handle check-in submission
+    document.getElementById('submit-checkin').addEventListener('click', async () => {
+      const userId = document.getElementById('user-id').value.trim();
+
+      if (!userId) {
+        alert('Please enter your ID number.');
+        return;
+      }
+
+      try {
         const response = await fetch('/api/checkin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -44,15 +64,24 @@
         document.getElementById('status-msg').innerText = data.message;
 
         if (response.ok) {
-          setTimeout(() => {
-            fetch('/api/checkout', {
+          // Update live count
+          updateActiveCount();
+
+          // Schedule auto-checkout after 1 hour
+          setTimeout(async () => {
+            await fetch('/api/checkout', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ user_id: userId })
             });
-          }, 3600000); // 1 hour
+            updateActiveCount(); // Refresh count after auto-checkout
+          }, 3600000); // 1 hour = 3600000ms
         }
-      });
-    </script>
-  </body>
+      } catch (err) {
+        console.error('Error during check-in:', err);
+        document.getElementById('status-msg').innerText = 'An error occurred. Please try again.';
+      }
+    });
+  </script>
+</body>
 </html>
