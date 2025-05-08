@@ -6,239 +6,199 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MyUWIGym | Member Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link rel="stylesheet" href="chatbox.css">
-  <script src="/socket.io/socket.io.js"></script>
-  <style>
-    /* [Keep all your existing styles here — unchanged] */
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: #f8f9fa;
-      margin: 0;
-      padding-bottom: 90px;
-      overflow-x: hidden;
+</head>
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: #f8f9fa;
+    margin: 0;
+    padding-bottom: 90px;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 400px;
+    margin: 20px auto 0;
+    padding: 20px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    position: relative;
+  }
+
+  .profile-pic {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 10px;
+  }
+
+  @media (max-width: 450px) {
+    .profile-pic {
+      width: 80px;
+      height: 80px;
     }
 
     .container {
-      max-width: 400px;
-      margin: 20px auto 0;
-      padding: 20px;
-      background: #fff;
-      border-radius: 20px;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-      text-align: center;
-      position: relative;
+      margin: 10px;
+    }
+  }
+
+  .plan-box,
+  .activity-box {
+    background: #f0f4f8;
+    margin: 15px 0;
+    padding: 15px;
+    border-radius: 15px;
+    text-align: left;
+  }
+
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: #fff;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.1);
+    z-index: 998;
+  }
+
+  .bottom-nav button {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: #333;
+    cursor: pointer;
+  }
+
+  .bottom-nav button:hover,
+  .bottom-nav button.active {
+    color: #e53935;
+  }
+
+  .floating-plus {
+    position: fixed;
+    bottom: 75px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999;
+    animation: bounce 2s ease;
+  }
+
+  .add-button {
+    background-color: #e53935;
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    font-size: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+  }
+
+  @keyframes bounce {
+
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+      transform: translateX(-50%) translateY(0);
     }
 
-    .profile-pic {
-      width: 70px;
-      height: 70px;
-      object-fit: cover;
-      border-radius: 50%;
-      margin-bottom: 10px;
+    40% {
+      transform: translateX(-50%) translateY(-20px);
     }
 
-    .plan-box,
-    .activity-box {
-      background: #f0f4f8;
-      margin: 15px 0;
-      padding: 15px;
-      border-radius: 15px;
-      text-align: left;
+    60% {
+      transform: translateX(-50%) translateY(-10px);
     }
+  }
 
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      background: #fff;
-      display: flex;
-      justify-content: space-around;
-      padding: 10px 0;
-      box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.1);
-      z-index: 998;
-    }
+  .chat-toggle {
+    position: fixed;
+    bottom: 140px;
+    right: 20px;
+    background-color: #333;
+    color: white;
+    border: none;
+    font-size: 20px;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    z-index: 999;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  }
 
-    .bottom-nav button {
-      background: none;
-      border: none;
-      font-size: 22px;
-      color: #333;
-      cursor: pointer;
-    }
+  .chatbox {
+    position: fixed;
+    bottom: 200px;
+    right: 20px;
+    width: 300px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    display: none;
+    z-index: 999;
+  }
 
-    .bottom-nav button:hover {
-      color: #d32f2f;
-    }
+  .chatbox-header {
+    background: black;
+    color: white;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
-    .floating-plus {
-      position: fixed;
-      bottom: 75px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 999;
-      animation: bounce 2s ease;
-    }
+  .chatbox-messages {
+    padding: 10px;
+    height: 200px;
+    overflow-y: auto;
+  }
 
-    .add-button {
-      background-color: #e53935;
-      color: white;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      border: none;
-      font-size: 28px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-      cursor: pointer;
-    }
+  .chatbox-input {
+    display: flex;
+    padding: 10px;
+    gap: 5px;
+  }
 
-    @keyframes bounce {
+  .chatbox-input input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
 
-      0%,
-      20%,
-      50%,
-      80%,
-      100% {
-        transform: translateX(-50%) translateY(0);
-      }
-
-      40% {
-        transform: translateX(-50%) translateY(-20px);
-      }
-
-      60% {
-        transform: translateX(-50%) translateY(-10px);
-      }
-    }
-
-    .chat-toggle {
-      position: fixed;
-      bottom: 140px;
-      right: 20px;
-      background-color: #333;
-      color: white;
-      border: none;
-      font-size: 20px;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      cursor: pointer;
-      z-index: 999;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-      animation: slideUp 1.5s ease forwards;
-    }
-
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(50px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .chatbox {
-      position: fixed;
-      bottom: 200px;
-      right: 20px;
-      width: 300px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-      overflow: hidden;
-      display: none;
-      z-index: 999;
-    }
-
-    .chatbox-header {
-      background: black;
-      color: white;
-      padding: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .chatbox-messages {
-      padding: 10px;
-      height: 200px;
-      overflow-y: auto;
-    }
-
-    .chatbox-input {
-      display: flex;
-      padding: 10px;
-      gap: 5px;
-    }
-
-    .chatbox-input input {
-      flex: 1;
-      padding: 8px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-
-    .chatbox-input button {
-      padding: 8px 12px;
-      background: black;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    @media (max-width: 450px) {
-      .container {
-        margin: 10px;
-      }
-    }
-
-    .weather-text {
-      font-size: 13px;
-      color: gray;
-      margin-top: -10px;
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 2px solid #ccc;
-      border-top-color: #333;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .weather-text {
-      font-size: 14px;
-      color: gray;
-      margin-top: -10px;
-    }
-  </style>
-</head>
+  .chatbox-input button {
+    padding: 8px 12px;
+    background: black;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+</style>
 
 <body onload="loadPage()">
-  <div class="container" id="main-content">
-    <!-- Dynamic content will load here -->
-  </div>
+  <div class="container" id="main-content"></div>
 
   <div class="floating-plus">
     <button id="bookBtn" class="add-button"><i class="fas fa-plus"></i></button>
   </div>
 
   <nav class="bottom-nav">
-    <button id="homeBtn"><i class="fas fa-home"></i></button>
+    <button id="homeBtn" class="active"><i class="fas fa-home"></i></button>
     <button id="manageBtn"><i class="fas fa-calendar-alt"></i></button>
     <button id="messagesBtn"><i class="fas fa-comment-dots"></i></button>
     <button id="settingsBtn"><i class="fas fa-cog"></i></button>
@@ -258,93 +218,48 @@
     </div>
   </div>
 
-  <!-- Inside <script> tag of your HTML -->
   <script>
-    const socket = io();
+
     const token = localStorage.getItem("token");
 
     function getGreeting() {
       const hour = new Date().getHours();
-      if (hour < 12) return "Good morning";
-      else if (hour < 18) return "Good afternoon";
-      else return "Good evening";
+      return hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
     }
-
-    async function fetchProfile() {
-      try {
-        const res = await fetch("/profile", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error("Failed to fetch profile");
-        return await res.json();
-      } catch (e) {
-        return { full_name: "Member", user_id: "N/A" };
-      }
-    }
-
 
     async function getWeather() {
-      const apiKey = "b5b96ca094a981dbe2c2b7926a538c8a"; // Use your own API key
-      const lat = 18.0120, lon = -76.7970;
-      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
-
+      const apiKey = "b5b96ca094a981dbe2c2b7926a538c8a";
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=18.0120&lon=-76.7970&appid=${apiKey}&units=metric`;
       try {
         const res = await fetch(url);
         const data = await res.json();
         return data.weather[0].description;
-      } catch (e) {
-        console.error("Weather fetch failed:", e);
+      } catch {
         return "Unavailable";
       }
     }
 
     async function getBestGymTimes() {
-      const url = "http://localhost:5000/api/predict-peak-hours";
       try {
-        const res = await fetch(url);
+        const res = await fetch("http://localhost:5000/api/predict-peak-hours");
         const data = await res.json();
-
-        const lowTraffic = data
-          .filter(p => p.predicted_checkins < 5)
-          .map(p => {
-            const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-            const hour = p.hour.toString().padStart(2, '0') + ":00";
-            return `${days[p.day]} @ ${hour}`;
-          })
-          .slice(0, 5)
-          .join(", ");
-
-        return `Recommended off-peak times: <strong>${lowTraffic}</strong>`;
-      } catch (err) {
-        console.warn("Prediction API failed:", err);
+        return `Recommended off-peak times: <strong>${data.filter(p => p.predicted_checkins < 5).slice(0, 5).map(p => {
+          const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+          return `${days[p.day]} @ ${p.hour.toString().padStart(2, '0')}:00`;
+        }).join(", ")}</strong>`;
+      } catch {
         return "Try visiting during early mornings or late evenings to avoid crowd.";
       }
     }
 
-    async function getSessions() {
-      const token = localStorage.getItem("token");
-      try {
-        const res = await fetch("/my-sessions", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const sessions = await res.json();
-        if (!sessions.length) return "No upcoming sessions.";
-        return sessions.map(s => `${s.date} @ ${s.time_slot}`).join("<br>");
-      } catch (e) {
-        return "Error loading sessions.";
-      }
-    }
-
     async function loadPage() {
+      setActiveNav("homeBtn");
       let fullName = localStorage.getItem("full_name");
       let userId = localStorage.getItem("user_id");
 
       if (!fullName || !userId) {
         try {
-          const token = localStorage.getItem("token");
-          const res = await fetch("/profile", {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const res = await fetch("/profile", { headers: { Authorization: `Bearer ${token}` } });
           const data = await res.json();
           fullName = data.full_name;
           userId = data.user_id;
@@ -356,31 +271,69 @@
         }
       }
 
-      const profilePicUrl = localStorage.getItem("profile_picture") || "profile-placeholder.png";
+      const profilePicUrl = localStorage.getItem("profile_picture") || "profile_pic.jpg";
       const weather = await getWeather();
       const greeting = getGreeting();
       const bestTimes = await getBestGymTimes();
-      const sessions = await getSessions();
 
       document.getElementById('main-content').innerHTML = `
+    <a href="member_settings.html">
       <img src="${profilePicUrl}" class="profile-pic" alt="Profile Picture">
-      <p style="font-size: 12px; color: gray;">ID: ${userId}</p>
-      /*<h1>${greeting}.</h1>
-      <p style="margin-top: -10px; color: gray;">It is currently <em>${weather}</em> at the UWI Gym.</p>
-
-      <div class="plan-box">
-          <strong>🏋‍♂ When To Visit</strong><br>
-          <span id="occupancyText">${bestTimes}</span>
-      </div>
-
-      <div class="activity-box">
-          <strong>📅 Upcoming Sessions</strong><br>
-          <span id="activityText">${sessions}</span>
-      </div>
-    `;
+    </a>
+    <p style="font-size: 12px; color: gray;">ID: ${userId}</p>
+    <h1>${greeting}, ${fullName.split(' ')[0]}</h1>
+    <p class="weather-text">The weather forecast at the UWI Gym: <em>${weather}</em>.</p>
+    <div class="plan-box">
+      <strong>🏋‍♂ When To Visit</strong><br>
+      <span id="occupancyText">${bestTimes}</span>
+    </div>
+    <div class="activity-box" style="text-align: center;">
+      <strong>📅 Ready to Work Out?</strong><br><br>
+      <button onclick="window.location.href='booking.html'" style="
+        background-color: #e53935;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 16px;
+        cursor: pointer;
+      ">Book Now</button>
+    </div>
+  `;
     }
+
+    function toggleChat() {
+      const chatbox = document.querySelector(".chatbox");
+      chatbox.style.display = chatbox.style.display === "none" || !chatbox.style.display ? "block" : "none";
+    }
+
+    function sendMessage() {
+      const input = document.getElementById("userInput");
+      const message = input.value.trim();
+      if (message) {
+        const messages = document.querySelector(".chatbox-messages");
+        messages.innerHTML += '<div><strong>You:</strong> ' + message + '</div>';
+        input.value = "";
+        messages.scrollTop = messages.scrollHeight;
+      }
+    }
+
+    function setActiveNav(activeId) {
+      document.querySelectorAll(".bottom-nav button").forEach(btn => {
+        btn.classList.toggle("active", btn.id === activeId);
+      });
+    }
+
+    document.getElementById("homeBtn").addEventListener("click", () => loadPage('homepage'));
+    document.getElementById("manageBtn").addEventListener("click", () => window.location.href = "manage_bookings.html");
+    document.getElementById("bookBtn").addEventListener("click", () => window.location.href = "booking.html");
+    document.getElementById("messagesBtn").addEventListener("click", () => toggleChat());
+    document.getElementById("settingsBtn").addEventListener("click", () => window.location.href = "member_settings.html");
   </script>
 
+
+
+  </script>
 </body>
 
 </html>

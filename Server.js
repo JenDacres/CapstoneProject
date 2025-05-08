@@ -281,6 +281,7 @@ app.post("/book-slot", authenticateToken, (req, res) => {
     });
 });
 
+
 // Send alert to all members
 app.post("/send-alert", async (req, res) => {
     const { message } = req.body;
@@ -310,6 +311,7 @@ app.post("/send-alert", async (req, res) => {
         }
     });
 });
+
 
 // Get all bookings for a user
 app.get("/my-bookings", authenticateToken, (req, res) => {
@@ -595,7 +597,7 @@ app.get("/admin/reports", (req, res) => {
     });
 });
 
-
+//Member sessions
 app.get("/my-sessions", authenticateToken, (req, res) => {
     const userId = req.user.userId;
     db.query("SELECT date, time_slot FROM bookings WHERE user_id = ? AND date >= CURDATE() ORDER BY date, time_slot", [userId], (err, results) => {
