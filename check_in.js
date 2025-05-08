@@ -6,14 +6,18 @@ const path = require('path');
 const app = express();
 const PORT = 3000;
 
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'check_in.html'));
+});
+
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
 
-const db = mysql.createConnection({
+/* const db = mysql.createConnection({
   host: 'localhost',
   user: 'root',
-  password: '',
-  database: 'gym_checkin'
+  password: 'gym123',
+  database: 'gym_checkin' */ //CHANGE DETAILS BEFORE RUNNING
 });
 
 db.connect((err) => {
@@ -24,149 +28,67 @@ db.connect((err) => {
   }
 });
 
-// Utility function to calculate priority score
-function calculatePriorityScore(userId, waitTime, cancellations, checkinsThisMonth) {
-  const membershipBonus = checkinsThisMonth > 10 ? 10 : 0; // VIP bonus
-  const cancellationPenalty = cancellations * 5; // -5 per cancellation
-  const minutesWaiting = Math.floor((Date.now() - new Date(waitTime)) / 60000); // Calculate minutes waiting
+// Check-in route
+app.post('/api/checkin', (req, res) => {
+  const { user_id } = req.body;
 
-  return (minutesWaiting * 2) + membershipBonus - cancellationPenalty; // Priority score formula
-}
+  if (!user_id) {
+    return res.status(400).json({ message: 'User ID is required.' });
+  }
 
-// Check slot availability and book a session
-app.post('/api/book-session', (req, res) => {
-  const { user_id, session_time } = req.body;
+  const updateSql = 'UPDATE users SET monthly_checkins = monthly_checkins + 1 WHERE id = ?';
 
-  // Check if the session is full
-  db.query('SELECT * FROM sessions WHERE session_time = ?', [session_time], (err, sessionResults) => {
+  db.query(updateSql, [user_id], (err, result) => {
     if (err) {
-      console.error('Error fetching session data:', err);
-      return res.status(500).json({ message: 'Error fetching session data.' });
+      console.error('Error updating check-in count:', err);
+      return res.status(500).json({ message: 'Error during check-in.' });
     }
 
-    if (sessionResults.length === 0) {
-      return res.status(404).json({ message: 'Session not found.' });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'User not found.' });
     }
 
-    const session = sessionResults[0];
+    const insertSql = 'INSERT INTO active_checkins (user_id, checkin_time) VALUES (?, NOW())';
+    db.query(insertSql, [user_id], (err) => {
+      if (err) {
+        console.error('Error inserting into active_checkins:', err);
+        return res.status(500).json({ message: 'Error recording active check-in.' });
+      }
 
-    if (session.booked < session.capacity) {
-      // Book the slot
-      const sql = 'UPDATE sessions SET booked = booked + 1 WHERE id = ?';
-      db.query(sql, [session.id], (err) => {
-        if (err) {
-          console.error('Error booking session:', err);
-          return res.status(500).json({ message: 'Error booking session.' });
-        }
-
-        // Add the user to the session's bookings (additional logic can be added here)
-        res.json({ message: 'Session booked successfully!' });
-      });
-    } else {
-      // Add the user to the waitlist if session is full
-      db.query('SELECT monthly_checkins, cancellations FROM users WHERE id = ?', [user_id], (err, userResults) => {
-        if (err) {
-          console.error('Error fetching user data:', err);
-          return res.status(500).json({ message: 'Error fetching user data.' });
-        }
-
-        if (userResults.length === 0) {
-          return res.status(404).json({ message: 'User not found.' });
-        }
-
-        const { monthly_checkins, cancellations } = userResults[0];
-
-        // Add user to the waitlist
-        const waitlistSql = 'INSERT INTO waitlist (user_id, session_time) VALUES (?, ?)';
-        db.query(waitlistSql, [user_id, session_time], (err, waitlistResult) => {
-          if (err) {
-            console.error('Error adding to waitlist:', err);
-            return res.status(500).json({ message: 'Error adding user to waitlist.' });
-          }
-
-          const priorityScore = calculatePriorityScore(user_id, waitlistResult.insertId, cancellations, monthly_checkins);
-
-          // Update the priority score for this user on the waitlist
-          const updateWaitlistSql = 'UPDATE waitlist SET priority_score = ? WHERE id = ?';
-          db.query(updateWaitlistSql, [priorityScore, waitlistResult.insertId], (err) => {
-            if (err) {
-              console.error('Error updating priority score:', err);
-              return res.status(500).json({ message: 'Error updating priority score.' });
-            }
-
-            res.json({ message: 'You have been added to the waitlist.', priorityScore });
-          });
-        });
-      });
-    }
+      res.json({ message: 'Check-in successful!' });
+    });
   });
 });
 
-// Handle user cancellations
-app.post('/api/cancel-booking', (req, res) => {
-  const { user_id, session_time } = req.body;
+// Live occupancy route
+app.get('/api/active-count', (req, res) => {
+  const sql = `
+    SELECT COUNT(*) AS count
+    FROM active_checkins
+    WHERE checkin_time >= NOW() - INTERVAL 1 HOUR
+  `;
 
-  // Check the session and free a slot
-  db.query('SELECT * FROM sessions WHERE session_time = ?', [session_time], (err, sessionResults) => {
+  db.query(sql, (err, results) => {
     if (err) {
-      console.error('Error fetching session data:', err);
-      return res.status(500).json({ message: 'Error fetching session data.' });
+      console.error('Error fetching active check-in count:', err);
+      return res.status(500).json({ message: 'Failed to fetch active check-ins.' });
     }
 
-    if (sessionResults.length === 0) {
-      return res.status(404).json({ message: 'Session not found.' });
-    }
-
-    const session = sessionResults[0];
-
-    if (session.booked > 0) {
-      // Free up one slot in the session
-      const sql = 'UPDATE sessions SET booked = booked - 1 WHERE id = ?';
-      db.query(sql, [session.id], (err) => {
-        if (err) {
-          console.error('Error cancelling session:', err);
-          return res.status(500).json({ message: 'Error cancelling session.' });
-        }
-
-        // Now process the next person in the waitlist
-        db.query('SELECT * FROM waitlist WHERE session_time = ? ORDER BY priority_score DESC LIMIT 1', [session_time], (err, waitlistResults) => {
-          if (err) {
-            console.error('Error fetching waitlist:', err);
-            return res.status(500).json({ message: 'Error fetching waitlist.' });
-          }
-
-          if (waitlistResults.length > 0) {
-            const nextUser = waitlistResults[0];
-
-            // Remove user from waitlist and book the session
-            const deleteWaitlistSql = 'DELETE FROM waitlist WHERE id = ?';
-            db.query(deleteWaitlistSql, [nextUser.id], (err) => {
-              if (err) {
-                console.error('Error removing user from waitlist:', err);
-                return res.status(500).json({ message: 'Error removing user from waitlist.' });
-              }
-
-              // Add to session's bookings
-              const bookWaitlistUserSql = 'UPDATE sessions SET booked = booked + 1 WHERE id = ?';
-              db.query(bookWaitlistUserSql, [session.id], (err) => {
-                if (err) {
-                  console.error('Error booking user from waitlist:', err);
-                  return res.status(500).json({ message: 'Error booking user from waitlist.' });
-                }
-
-                res.json({ message: `User ${nextUser.user_id} has been booked into the session.` });
-              });
-            });
-          } else {
-            res.json({ message: 'No users in the waitlist for this session.' });
-          }
-        });
-      });
-    } else {
-      res.status(400).json({ message: 'No bookings to cancel.' });
-    }
+    res.json({ count: results[0].count });
   });
 });
+
+// Auto-cleanup of expired check-ins every 5 minutes
+setInterval(() => {
+  const sql = 'DELETE FROM active_checkins WHERE checkin_time < NOW() - INTERVAL 1 HOUR';
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.error('Error cleaning expired check-ins:', err);
+    } else if (result.affectedRows > 0) {
+      console.log(`Auto-removed ${result.affectedRows} expired check-ins.`);
+    }
+  });
+}, 5 * 60 * 1000); // every 5 minutes
 
 // Start the server
 app.listen(PORT, () => {
