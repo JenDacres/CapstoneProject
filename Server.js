@@ -290,13 +290,23 @@ app.post("/send-alert", async (req, res) => {
     db.query(sql, async (err, results) => {
         if (err) return res.status(500).json({ error: "Database error." });
 
-        try {
-            const sendPromises = results.map(row => sendWhatsApp(row.phone, message));
+         try {
+            //Send both WhatApp and email
+            const sendPromises = results.map(user => {
+                const waPromise = sendWhatsApp(user.phone, message);
+                const emailPromise = sendEmail(
+                    user.email,
+                    "MYUWIGYM Alert",
+                    message
+                );
+                return Promise.all([waPromise, emailPromise]);
+            });
+
             await Promise.all(sendPromises);
             res.json({ message: "Alert sent to all members." });
-        } catch (twilioErr) {
-            console.error("WhatsApp send error:", twilioErr);
-            res.status(500).json({ error: "Failed to send WhatsApp messages." });
+        } catch (err) {
+            console.error("Sending alert failed:", err);
+            res.status(500).json({ error: "Failed to send alerts to some users." });
         }
     });
 });
