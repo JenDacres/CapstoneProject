@@ -320,56 +320,58 @@ app.delete("/cancel-booking/:id", authenticateToken, (req, res) => {
 // Check-in
 app.post("/check-in", authenticateToken, (req, res) => {
     const userId = req.user.userId;
-
+  
     db.query("SELECT COUNT(*) AS occupancy FROM checkins WHERE status = 'active'", (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
+      if (result[0].occupancy >= 25) {
+        return res.status(403).json({ message: "Gym is full" });
+      }
+  
+      db.query("SELECT * FROM checkins WHERE user_id = ? AND status = 'active'", [userId], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (result[0].occupancy >= 25) {
-            return res.status(403).json({ message: "Gym is full" });
+        if (result.length > 0) {
+          return res.status(400).json({ message: "Already checked in" });
         }
-
-        db.query("SELECT * FROM checkins WHERE user_id = ? AND status = 'active'", [userId], (err, result) => {
-            if (err) return res.status(500).json({ error: err.message });
-            if (result.length > 0) {
-                return res.status(400).json({ message: "Already checked in" });
+  
+        const expectedCheckout = new Date(Date.now() + 45 * 60 * 1000); // 45 mins later
+        db.query("INSERT INTO checkins (user_id, expected_checkout_time) VALUES (?, ?)", [userId, expectedCheckout], (err) => {
+          if (err) return res.status(500).json({ error: err.message });
+  
+          db.query("SELECT full_name, role FROM users WHERE id = ?", [userId], (err, result) => {
+            if (!err && result.length) {
+              io.emit("checkin", { userId, full_name: result[0].full_name, role: result[0].role });
             }
-
-            const expectedCheckout = new Date(Date.now() + 45 * 60 * 1000); // 45 mins later
-            db.query("INSERT INTO checkins (user_id, expected_checkout_time) VALUES (?, ?)", [userId, expectedCheckout], (err) => {
-                if (err) return res.status(500).json({ error: err.message });
-
-                db.query("SELECT full_name, role FROM users WHERE id = ?", [userId], (err, result) => {
-                    if (!err && result.length) {
-                        io.emit("checkin", { userId, full_name: result[0].full_name, role: result[0].role });
-                    }
-                });
-
-                res.json({ message: "Check-in successful" });
-
-                setTimeout(() => {
-                    db.query("UPDATE checkins SET status = 'completed' WHERE user_id = ? AND status = 'active'", [userId]);
-                    db.query("SELECT phone, full_name, role FROM users WHERE id = ?", [userId], (err, result) => {
-                        if (!err && result.length) {
-                            const { phone, full_name, role } = result[0];
-                            io.emit("checkout", { userId, full_name, role });
-                            sendWhatsApp(phone, "Your gym session has ended. Thank you!");
-                        }
-                    });
-                }, 45 * 60 * 1000);
+          });
+  
+          res.json({ message: "Check-in successful" });
+  
+          setTimeout(() => {
+            db.query("UPDATE checkins SET status = 'completed' WHERE user_id = ? AND status = 'active'", [userId]);
+            db.query("SELECT phone, full_name, role FROM users WHERE id = ?", [userId], (err, result) => {
+              if (!err && result.length) {
+                const { phone, full_name, role } = result[0];
+                io.emit("checkout", { userId, full_name, role });
+                sendWhatsApp(phone, "Your gym session has ended. Thank you!");
+              }
             });
+          }, 45 * 60 * 1000);
         });
+      });
     });
-});
+  });
+  
 
 // Live occupancy
 app.get("/live-occupancy", (req, res) => {
     db.query("SELECT COUNT(*) AS occupancy FROM checkins WHERE status = 'active'", (err, result) => {
-        if (err) {
-            console.error("Error fetching occupancy:", err);
-            return res.json({ occupancy: 0 }); // Return zero if there's an error
-        }
-        res.json({ occupancy: result[0]?.occupancy || 0 }); // Default to 0 if no result
+      if (err) {
+        console.error("Error fetching occupancy:", err);
+        return res.json({ occupancy: 0 }); // Return zero if there's an error
+      }
+      res.json({ occupancy: result[0]?.occupancy || 0 }); // Default to 0 if no result
     });
-});
+  });
+  
 
 
 // Hourly summary
@@ -592,14 +594,20 @@ app.get("/my-sessions", authenticateToken, (req, res) => {
     });
 });
 
-
+// Get user profile
 app.get("/profile", authenticateToken, (req, res) => {
     const userId = req.user.userId;
-    db.query("SELECT full_name FROM users WHERE user_id = ?", [userId], (err, results) => {
+    db.query(
+      "SELECT full_name, user_id FROM users WHERE id = ?",
+      [userId],
+      (err, results) => {
         if (err) return res.status(500).send(err);
-        res.json(results[0]);
-    });
-});
+        if (results.length === 0) return res.status(404).json({ message: "User not found" });
+        res.json(results[0]); // returns { full_name: '...', user_id: 'UWI001' }
+      }
+    );
+  });
+  
 
 
 

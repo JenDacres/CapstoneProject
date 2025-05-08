@@ -5,11 +5,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MyUWIGym | Member Dashboard</title>
-
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="chatbox.css">
-
+  <script src="/socket.io/socket.io.js"></script>
   <style>
+    /* [Keep all your existing styles here — unchanged] */
     body {
       font-family: 'Poppins', sans-serif;
       background: #f8f9fa;
@@ -197,11 +197,38 @@
         margin: 10px;
       }
     }
+
+    .weather-text {
+      font-size: 13px;
+      color: gray;
+      margin-top: -10px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #ccc;
+      border-top-color: #333;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .weather-text {
+      font-size: 14px;
+      color: gray;
+      margin-top: -10px;
+    }
   </style>
 </head>
 
 <body onload="loadPage()">
-
   <div class="container" id="main-content">
     <!-- Dynamic content will load here -->
   </div>
@@ -211,10 +238,10 @@
   </div>
 
   <nav class="bottom-nav">
-    <button id="homeBtn" title="Home"><i class="fas fa-home"></i></button>
-    <button id="manageBtn" title="Manage"><i class="fas fa-calendar-alt"></i></button>
-    <button id="messagesBtn" title="Messages"><i class="fas fa-comment-dots"></i></button>
-    <button id="settingsBtn" title="Settings"><i class="fas fa-cog"></i></button>
+    <button id="homeBtn"><i class="fas fa-home"></i></button>
+    <button id="manageBtn"><i class="fas fa-calendar-alt"></i></button>
+    <button id="messagesBtn"><i class="fas fa-comment-dots"></i></button>
+    <button id="settingsBtn"><i class="fas fa-cog"></i></button>
   </nav>
 
   <button class="chat-toggle" onclick="toggleChat()">💬</button>
@@ -226,12 +253,16 @@
     </div>
     <div class="chatbox-messages"></div>
     <div class="chatbox-input">
-      <input type="text" placeholder="Ask something..." id="userInput" />
+      <input type="text" id="userInput" placeholder="Ask something..." />
       <button onclick="sendMessage()">Send</button>
     </div>
   </div>
 
+  <!-- Inside <script> tag of your HTML -->
   <script>
+    const socket = io();
+    const token = localStorage.getItem("token");
+
     function getGreeting() {
       const hour = new Date().getHours();
       if (hour < 12) return "Good morning";
@@ -239,68 +270,117 @@
       else return "Good evening";
     }
 
-    async function loadPage() {
-      let userName = localStorage.getItem("full_name") || "Member";
-      let profilePicUrl = localStorage.getItem("profile_picture") || "profile-placeholder.png";
-      let weather = await getWeather();
-      let greeting = getGreeting();
-
-      let content = `
-        <img src="${profilePicUrl}" class="profile-pic" alt="Profile Picture">
-        <p style="font-size: 14px; color: gray;">ID: ${localStorage.getItem("user_id") || "N/A"}</p>
-        <h1>${greeting}, ${userName}. It is currently ${weather} at the UWI Gym.</h1>
-
-        <div class="plan-box">
-            <strong>🏋‍♂ My Plan for Today</strong><br>
-            <span id="occupancyText">Loading current occupancy...</span>
-        </div>
-
-        <div class="activity-box">
-            <strong>📅 Upcoming Sessions</strong><br>
-            <span id="activityText">Loading sessions...</span>
-        </div>
-      `;
-
-      document.getElementById('main-content').innerHTML = content;
+    async function fetchProfile() {
+      try {
+        const res = await fetch("/profile", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error("Failed to fetch profile");
+        return await res.json();
+      } catch (e) {
+        return { full_name: "Member", user_id: "N/A" };
+      }
     }
 
+
     async function getWeather() {
-      const apiKey = "b5b96ca094a981dbe2c2b7926a538c8a"; // Replace with a valid key
-      const lat = 18.0120;
-      const lon = -76.7970;
+      const apiKey = "b5b96ca094a981dbe2c2b7926a538c8a"; // Use your own API key
+      const lat = 18.0120, lon = -76.7970;
       const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
 
       try {
-        const response = await fetch(url);
-        const data = await response.json();
+        const res = await fetch(url);
+        const data = await res.json();
         return data.weather[0].description;
-      } catch (error) {
-        console.error("Weather fetch failed:", error);
+      } catch (e) {
+        console.error("Weather fetch failed:", e);
         return "Unavailable";
       }
     }
 
-    function toggleChat() {
-      const chat = document.querySelector('.chatbox');
-      chat.style.display = (chat.style.display === 'none' || chat.style.display === '') ? 'block' : 'none';
+    async function getBestGymTimes() {
+      const url = "http://localhost:5000/api/predict-peak-hours";
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        const lowTraffic = data
+          .filter(p => p.predicted_checkins < 5)
+          .map(p => {
+            const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            const hour = p.hour.toString().padStart(2, '0') + ":00";
+            return `${days[p.day]} @ ${hour}`;
+          })
+          .slice(0, 5)
+          .join(", ");
+
+        return `Recommended off-peak times: <strong>${lowTraffic}</strong>`;
+      } catch (err) {
+        console.warn("Prediction API failed:", err);
+        return "Try visiting during early mornings or late evenings to avoid crowd.";
+      }
     }
 
-    function sendMessage() {
-      const input = document.getElementById('userInput');
-      if (input.value.trim() === "") return;
-      const messageBox = document.querySelector('.chatbox-messages');
-      messageBox.innerHTML += `<div><strong>You:</strong> ${input.value}</div>`;
-      input.value = '';
-      messageBox.scrollTop = messageBox.scrollHeight;
+    async function getSessions() {
+      const token = localStorage.getItem("token");
+      try {
+        const res = await fetch("/my-sessions", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const sessions = await res.json();
+        if (!sessions.length) return "No upcoming sessions.";
+        return sessions.map(s => `${s.date} @ ${s.time_slot}`).join("<br>");
+      } catch (e) {
+        return "Error loading sessions.";
+      }
     }
 
-    // Navigation button event listeners
-    document.getElementById("homeBtn").addEventListener("click", () => loadPage());
-    document.getElementById("manageBtn").addEventListener("click", () => window.location.href = "manage_bookings.html");
-    document.getElementById("bookBtn").addEventListener("click", () => window.location.href = "booking.html");
-    document.getElementById("messagesBtn").addEventListener("click", () => toggleChat());
-    document.getElementById("settingsBtn").addEventListener("click", () => window.location.href = "member_settings.html");
+    async function loadPage() {
+      let fullName = localStorage.getItem("full_name");
+      let userId = localStorage.getItem("user_id");
+
+      if (!fullName || !userId) {
+        try {
+          const token = localStorage.getItem("token");
+          const res = await fetch("/profile", {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          fullName = data.full_name;
+          userId = data.user_id;
+          localStorage.setItem("full_name", fullName);
+          localStorage.setItem("user_id", userId);
+        } catch {
+          fullName = "Member";
+          userId = "N/A";
+        }
+      }
+
+      const profilePicUrl = localStorage.getItem("profile_picture") || "profile-placeholder.png";
+      const weather = await getWeather();
+      const greeting = getGreeting();
+      const bestTimes = await getBestGymTimes();
+      const sessions = await getSessions();
+
+      document.getElementById('main-content').innerHTML = `
+      <img src="${profilePicUrl}" class="profile-pic" alt="Profile Picture">
+      <p style="font-size: 12px; color: gray;">ID: ${userId}</p>
+      /*<h1>${greeting}.</h1>
+      <p style="margin-top: -10px; color: gray;">It is currently <em>${weather}</em> at the UWI Gym.</p>
+
+      <div class="plan-box">
+          <strong>🏋‍♂ When To Visit</strong><br>
+          <span id="occupancyText">${bestTimes}</span>
+      </div>
+
+      <div class="activity-box">
+          <strong>📅 Upcoming Sessions</strong><br>
+          <span id="activityText">${sessions}</span>
+      </div>
+    `;
+    }
   </script>
+
 </body>
 
 </html>
