@@ -7,9 +7,6 @@
   <link rel="stylesheet" href="HomePage.css" />
 </head>
 <body>
-  <div class="theme-toggle">
-    <button id="theme-btn">🌞 / 🌚</button>
-  </div>
 
   <div class="container fade-in">
     <img src="5074569.jpg" alt="Cartoon Gym Character" class="hero-icon" />
@@ -30,11 +27,6 @@
     if (prefersDark) {
       body.classList.add('dark-mode');
     }
-
-    // Toggle with button
-    themeBtn.addEventListener('click', () => {
-      body.classList.toggle('dark-mode');
-    });
   </script>
 </body>
 </html>

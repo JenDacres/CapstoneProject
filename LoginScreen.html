@@ -48,6 +48,9 @@
         if (response.ok) {
           sessionStorage.setItem("token", data.token);
           sessionStorage.setItem("refreshToken", data.refreshToken);
+          sessionStorage.setItem("role", data.role);
+          sessionStorage.setItem("email", email);
+          sessionStorage.setItem("password", password);
           sessionStorage.setItem("user_id", data.user_id);
           sessionStorage.setItem("full_name", data.full_name);
 

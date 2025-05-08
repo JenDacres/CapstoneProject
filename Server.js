@@ -110,21 +110,22 @@ function generateUserId(role, nextId) {
 }
 
 
-// Generate JWT Token (expires in 1 hour)
+// Generate JWT Token
 function generateToken(user) {
     return jwt.sign(
-        { userId: user.id, role: user.role },
+        { userId: user.user_id, role: user.role },
         process.env.JWT_SECRET || "secretkey",
-        { expiresIn: "1h" } //  Token expires in 1 hour
+        { expiresIn: "1h" }
     );
 }
 
-//  Generate Refresh Token (expires in 7 days)
+
+// Generate Refresh Token
 function generateRefreshToken(user) {
     return jwt.sign(
-        { userId: user.id },
+        { userId: user.user_id },
         process.env.REFRESH_SECRET || "refreshkey",
-        { expiresIn: "7d" } //  Refresh token lasts 7 days
+        { expiresIn: "7d" }
     );
 }
 
@@ -143,7 +144,6 @@ function authenticateToken(req, res, next) {
     });
 }
 
-
 // Refresh Token Route
 app.post("/refresh-token", (req, res) => {
     const { refreshToken } = req.body;
@@ -156,40 +156,40 @@ app.post("/refresh-token", (req, res) => {
         res.json({ token: newToken });
     });
 });
-
 // --- ROUTES ---
 
 // Registration
 app.post("/register", (req, res) => {
     const { full_name, email, phone, password } = req.body;
-    const role = "Member"; // Default role for new users
+    const role = "Member";
     const formattedPhone = `+${phone.replace(/\D/g, "")}`;
 
-    // Hash password
     bcrypt.hash(password, 10, (err, hash) => {
         if (err) return res.status(500).json({ error: "Password hashing failed" });
 
-        // Get Max ID and Increment
         db.query("SELECT MAX(id) AS max_id FROM users", (err2, results) => {
             if (err2 || results.length === 0) return res.status(500).json({ error: "Failed to generate user ID" });
 
-            const nextId = (results[0].max_id || 0) + 1; // Proper ID increment
+            const nextId = (results[0].max_id || 0) + 1;
             const newUserId = generateUserId(role, nextId);
 
-            //  Insert New User with Generated ID
             const insertSql = `
                 INSERT INTO users (user_id, full_name, email, role, phone, password_hash)
                 VALUES (?, ?, ?, ?, ?, ?)
             `;
-            db.query(insertSql, [newUserId, full_name, email, role, formattedPhone, hash], (err3, result) => {
+            db.query(insertSql, [newUserId, full_name, email, role, formattedPhone, hash], (err3) => {
                 if (err3) return res.status(500).json({ error: err3.sqlMessage });
 
-                res.json({ message: "User registered successfully!", user_id: newUserId });
+                // Send welcome email dynamically
+                sendEmail(email, "Welcome to UWI Gym!", 
+                    `Hello ${full_name}, thanks for signing up! 
+                    If you are a UWI student, please bring your ID card with you to the gym!`)
+                    .then(() => res.json({ message: "User registered successfully! Email sent." }))
+                    .catch(() => res.status(500).json({ error: "Registration successful, but email could not be sent." }));
             });
         });
     });
 });
-
 
 // Profile Picture Upload 
 app.post("/update-profile-picture", upload.single("profile_picture"), (req, res) => {
@@ -228,31 +228,31 @@ app.use("/uploads/profile_pics", express.static(path.join(__dirname, "uploads/pr
 // Login Route
 app.post("/login", (req, res) => {
     const { email, password } = req.body;
-
+  
     db.query("SELECT * FROM users WHERE email = ?", [email], (err, results) => {
-        if (err) return res.status(500).json({ message: "Server error" });
-        if (results.length === 0) return res.status(401).json({ message: "Incorrect email or password" });
-
-        const user = results[0];
-        bcrypt.compare(password, user.password_hash, (err, match) => {
-            if (err) return res.status(500).json({ message: "Password verification error" });
-            if (!match) return res.status(401).json({ message: "Incorrect email or password" });
-
-            const token = generateToken(user);
-            const refreshToken = generateRefreshToken(user);
-
-            res.json({
-                message: "Login successful",
-                role: user.role,
-                user_id: user.user_id,
-                full_name: user.full_name,
-                token,
-                refreshToken
-            });
+      if (err) return res.status(500).json({ message: "Server error" });
+      if (results.length === 0) return res.status(401).json({ message: "Incorrect email or password" });
+  
+      const user = results[0];
+  
+      bcrypt.compare(password, user.password_hash, (err, match) => {
+        if (err) return res.status(500).json({ message: "Password verification error" });
+        if (!match) return res.status(401).json({ message: "Incorrect email or password" });
+  
+        const token = generateToken(user);           // ✅ 1-hour access token
+        const refreshToken = generateRefreshToken(user); // ✅ 7-day refresh token
+  
+        res.json({
+          message: "Login successful",
+          role: user.role,
+          user_id: user.user_id,
+          full_name: user.full_name,
+          token,
+          refreshToken
         });
+      });
     });
-});
-
+  });
 app.get('/api/member/profile', (req, res) => {
     try {
         const userId = req.user.id;
@@ -399,7 +399,6 @@ app.get("/live-occupancy-summary", (req, res) => {
         });
     });
 });
-
 // Create Trainer
 app.post("/admin/add-trainer", async (req, res) => {
     const { firstName, lastName, email } = req.body;
@@ -420,8 +419,9 @@ app.post("/admin/add-trainer", async (req, res) => {
     `;
     db.query(insertSql, [fullName, email, phone, passwordHash], (err, result) => {
         if (err) {
+            // 🔍 Improved logging here
             console.error("Insert error:", err);
-            return res.status(500).json({ message: "Failed to add trainer." });
+            return res.status(500).json({ message: "Failed to add trainer.", error: err.message });
         }
 
         const insertId = result.insertId;
@@ -430,15 +430,15 @@ app.post("/admin/add-trainer", async (req, res) => {
         db.query("UPDATE users SET user_id = ? WHERE id = ?", [userId, insertId]);
 
         const loginInfoMessage = `
-  Hi ${fullName},
-  
-  Your trainer account has been created.
-  
-  Login ID: ${email}
-  Password: ${rawPassword}
-  
-  Please change your password after first login.
-      `.trim();
+Hi ${fullName},
+
+Your trainer account has been created.
+
+Login ID: ${email}
+Password: ${rawPassword}
+
+Please change your password after first login.
+        `.trim();
 
         // Simulate WhatsApp
         sendWhatsAppSimulated(phone, loginInfoMessage);
@@ -454,6 +454,8 @@ app.post("/admin/add-trainer", async (req, res) => {
             });
     });
 });
+
+
 
 
 // Trainer list

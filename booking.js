@@ -305,33 +305,29 @@ function closeTrainerModal() {
 }
 
 function skipTrainer() {
-  fetch(`http://localhost:5000/check-slot?date=${selectedDate}&time=${selectedTime}`)
+  const userId = localStorage.getItem("user_id"); // Replace with how you get the user ID
+
+  fetch("http://localhost:5000/api/book-session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_id: userId,
+      session_time: `${selectedDate} ${selectedTime}`,
+      trainer_id: selectedTrainerId || null
+    })
+
+  })
     .then(res => res.json())
     .then(data => {
-      if (data.full) {
-        alert(`The slot on ${selectedDate} at ${selectedTime} is full. You've been added to the waitlist.`);
-      } else {
-        fetch("http://localhost:5000/book-slot", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            date: selectedDate,
-            time: selectedTime,
-            trainerId: null
-          })
-        })
-          .then(res => {
-            if (res.ok) {
-              alert(`You have successfully booked the slot on ${selectedDate} at ${selectedTime} without a trainer.`);
-            } else {
-              alert("Booking failed. Please try again.");
-            }
-          });
-      }
-
+      alert(data.message);
       closeTrainerModal();
+    })
+    .catch(err => {
+      console.error("Booking error:", err);
+      alert("An error occurred while booking. Please try again.");
     });
 }
+
 
 function confirmTrainer() {
   if (!selectedTrainerId) {
@@ -339,30 +335,25 @@ function confirmTrainer() {
     return;
   }
 
-  fetch(`http://localhost:5000/check-slot?date=${selectedDate}&time=${selectedTime}`)
+  const userId = localStorage.getItem("user_id"); // Adjust as needed
+
+  fetch("http://localhost:5000/api/book-session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_id: userId,
+      session_time: `${selectedDate} ${selectedTime}`,
+      trainer_id: selectedTrainerId // Optional: if you add this field to the backend later
+    })
+  })
     .then(res => res.json())
     .then(data => {
-      if (data.full) {
-        alert(`The slot on ${selectedDate} at ${selectedTime} is full. You've been added to the waitlist.`);
-      } else {
-        fetch("http://localhost:5000/book-slot", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            date: selectedDate,
-            time: selectedTime,
-            trainerId: selectedTrainerId
-          })
-        })
-          .then(res => {
-            if (res.ok) {
-              alert(`You have successfully booked the slot on ${selectedDate} at ${selectedTime} with your selected trainer.`);
-            } else {
-              alert("Booking failed. Please try again.");
-            }
-          });
-      }
-
+      alert(data.message);
       closeTrainerModal();
+    })
+    .catch(err => {
+      console.error("Booking error:", err);
+      alert("An error occurred while booking. Please try again.");
     });
 }
+
