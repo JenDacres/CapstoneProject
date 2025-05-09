@@ -551,7 +551,7 @@ app.get("/trainer-upcoming-clients/:trainerId", (req, res) => {
 
 // Admin - Get pending users for approval
 app.get("/admin/pending-users", (req, res) => {
-    db.query("SELECT id, full_name, email, role FROM users WHERE status = 'Pending'", (err, results) => {
+    db.query("SELECT id, full_name, email, role FROM users WHERE status = 'Pending' AND role = 'Member'" , (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(results);
     });

@@ -17,8 +17,8 @@ app.use(express.static(path.join(__dirname)));
   host: 'localhost',
   user: 'root',
   password: 'gym123',
-  database: 'gym_checkin' */ //CHANGE DETAILS BEFORE RUNNING
-});
+  database: 'gym_checkin' //CHANGE DETAILS BEFORE RUNNING
+}); */
 
 db.connect((err) => {
   if (err) {
