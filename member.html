@@ -214,7 +214,7 @@
   </div>
 
   <script>
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     let occupancyChart;
 
     function getGreeting() {
@@ -280,8 +280,8 @@
 
     async function loadPage() {
       setActiveNav("homeBtn");
-      let fullName = localStorage.getItem("full_name");
-      let userId = localStorage.getItem("user_id");
+      let fullName = sessionStorage.getItem("full_name");
+      let userId = sessionStorage.getItem("user_id");
 
       if (!fullName || !userId) {
         try {
@@ -289,15 +289,15 @@
           const data = await res.json();
           fullName = data.full_name;
           userId = data.user_id;
-          localStorage.setItem("full_name", fullName);
-          localStorage.setItem("user_id", userId);
+          sessionStorage.setItem("full_name", fullName);
+          sessionStorage.setItem("user_id", userId);
         } catch {
           fullName = "Member";
           userId = "N/A";
         }
       }
 
-      const profilePicUrl = localStorage.getItem("profile_picture") || "profile_pic.jpg";
+      const profilePicUrl = sessionStorage.getItem("profile_picture") || "profile_pic.png";
       const weather = await getWeather();
       const greeting = getGreeting();
 
@@ -308,11 +308,11 @@
         <h1>${greeting}, ${fullName.split(' ')[0]}</h1>
         <p class="weather-text">The weather forecast at the UWI Gym: <em>${weather}</em>.</p>
         <div class="plan-box">
-          <strong>📊 Live Occupancy</strong><br>
+          <strong>Live Occupancy</strong><br>
           <canvas id="occupancyChart" width="100%" height="100"></canvas>
         </div>
         <div class="activity-box" style="text-align: center;">
-          <strong>📅 Ready to Work Out?</strong><br><br>
+          <strong>Ready to Work Out?</strong><br><br>
           <button onclick="window.location.href='booking.html'" style="
             background-color: #e53935;
             color: white;

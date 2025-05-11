@@ -8,8 +8,8 @@ let isYearPickerOpen = false;
 let yearPickerYear = currentDate.getFullYear();
 
 const bookedSlots = {
-  "2024-04-15": ["6:00", "8:00"],
-  "2024-04-20": ["10:00"]
+  "2025-05-13": ["6:00", "8:00", "9:00"],
+  "2025-05-20": ["10:00"]
 };
 
 function setView(mode) {
@@ -304,46 +304,37 @@ function closeTrainerModal() {
   }, 300); // matches the CSS animation duration
 }
 
-function skipTrainer() {
-  const userId = localStorage.getItem("user_id"); // Replace with how you get the user ID
+function bookSlot(wantsTrainer) {
+  const userId = sessionStorage.getItem("user_id");
+  const trainerDropdown = document.getElementById("trainerSelect");
+  const trainerIdToSend = wantsTrainer ? trainerDropdown.value : null;
 
-  fetch("http://localhost:5000/api/book-session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      user_id: userId,
-      session_time: `${selectedDate} ${selectedTime}`,
-      trainer_id: selectedTrainerId || null
-    })
-
-  })
-    .then(res => res.json())
-    .then(data => {
-      alert(data.message);
-      closeTrainerModal();
-    })
-    .catch(err => {
-      console.error("Booking error:", err);
-      alert("An error occurred while booking. Please try again.");
-    });
-}
-
-
-function confirmTrainer() {
-  if (!selectedTrainerId) {
+  if (wantsTrainer && !trainerIdToSend) {
     alert("Please select a trainer.");
     return;
   }
 
-  const userId = localStorage.getItem("user_id"); // Adjust as needed
+  if (!selectedDate || !selectedTime) {
+    alert("Please select a date and time.");
+    return;
+  }
 
-  fetch("http://localhost:5000/api/book-session", {
+  console.log("Booking slot:", {
+    date: selectedDate,
+    time_slot: selectedTime,
+    trainer_id: trainerIdToSend
+  });
+
+  fetch("http://localhost:5000/book-slot", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${sessionStorage.getItem("token")}`
+    },
     body: JSON.stringify({
-      user_id: userId,
-      session_time: `${selectedDate} ${selectedTime}`,
-      trainer_id: selectedTrainerId // Optional: if you add this field to the backend later
+      date: selectedDate,
+      time_slot: selectedTime,
+      trainer_id: trainerIdToSend
     })
   })
     .then(res => res.json())
@@ -357,3 +348,18 @@ function confirmTrainer() {
     });
 }
 
+
+
+function requestWithTrainer() {
+  const trainerDropdown = document.getElementById("trainerSelect");
+  const trainerIdToSend = trainerDropdown.value;
+
+  if (!trainerIdToSend) {
+    alert("Please select a trainer.");
+    return;
+  }
+
+  bookSlot(trainerIdToSend, true); // pass trainerId and a flag indicating this is a trainer request
+}
+
+document.getElementById("trainerModalClose").onclick = closeTrainerModal;

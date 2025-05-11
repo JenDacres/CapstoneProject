@@ -1,4 +1,4 @@
--- Active: 1743564584943@@127.0.0.1@3306@myuwigym
+h- Active: 1743564584943@@127.0.0.1@3306@myuwigym
 -- SET search_path TO myuwigym;  -- Uncomment if using PostgreSQL
 
 -- Users Table
@@ -23,31 +23,9 @@ CREATE TABLE bookings (
     date DATE NOT NULL,
     time_slot VARCHAR(20) NOT NULL,
     status VARCHAR(20) DEFAULT 'Booked' CHECK (status IN ('Booked', 'Cancelled')),
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE  -- Fixed foreign key reference
-);
+    FOREIGN KEY (trainer_id) REFERENCES users(user_id)
+  );
 
--- Checkins Table
--- This table tracks user check-ins to the gym
-CREATE TABLE checkins (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    checkin_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    expected_checkout_time DATETIME,
-    status ENUM('active', 'completed') DEFAULT 'active',
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
-
--- Live Occupancy Table
--- This table tracks the number of users in the gym at any given time
--- It is updated in real-time and can be used to manage capacity
-CREATE TABLE occupancy (
-    id SERIAL PRIMARY KEY,
-    date DATE NOT NULL,
-    time_slot VARCHAR(20) NOT NULL,
-    occupancy_count INT DEFAULT 0,
-    UNIQUE(date, time_slot)  -- Prevents duplicate entries
-);
 
 -- Trainer Requests Table
 -- This table tracks requests made by users to book trainers
@@ -61,19 +39,9 @@ CREATE TABLE trainer_requests (
   FOREIGN KEY (trainer_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
--- Trainer Availability Table
--- This table tracks the availability of trainers for bookings
-CREATE TABLE trainer_availability (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  trainer_id VARCHAR(20),
-  day_of_week VARCHAR(10),  -- e.g. Monday, Tuesday
-  time_slot VARCHAR(20),     -- e.g. 09:00 - 10:00
-  available BOOLEAN DEFAULT TRUE,
-  FOREIGN KEY (trainer_id) REFERENCES users(user_id)
-);
 
 -- Report Table
--- This table stores reports made by users about trainers or other users
+-- This table stores reports made by users about trainers or other gym equipment
 CREATE TABLE reports (
   id SERIAL PRIMARY KEY,
   user_id VARCHAR(20),
@@ -85,15 +53,33 @@ CREATE TABLE reports (
 -- Adding a new column to track monthly visits
 -- This column will be updated at the end of each month to reset the count
 ALTER TABLE users
-ADD COLUMN monthly_visits INT DEFAULT 0,
-ADD COLUMN last_reset_month INT DEFAULT MONTH(CURRENT_DATE);
+ADD COLUMN monthly_visits INT DEFAULT 0,                     --drop
+ADD COLUMN last_reset_month INT DEFAULT MONTH(CURRENT_DATE); --drop
 
 ALTER TABLE users ADD COLUMN profile_picture VARCHAR(255);
 
-CREATE TABLE trainer (
-    trainer_id VARCHAR(255) PRIMARY KEY,
-    full_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    phone VARCHAR(20),
-    password_hash VARCHAR(255) NOT NULL
+ALTER TABLE users ADD monthly_checkins INT DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS sessions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_time DATETIME NOT NULL,
+  capacity INT NOT NULL,   
+  booked INT DEFAULT 0 
+  );
+
+ ALTER TABLE users ADD COLUMN cancellations INT DEFAULT 0; 
+
+ CREATE TABLE active_checkins (
+  user_id INT NOT NULL,
+  checkin_time DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS waitlist (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    session_time DATETIME,
+    wait_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    cancellations INT DEFAULT 0, 
+    priority_score INT DEFAULT 0, 
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );

@@ -13,12 +13,12 @@ app.get('/', (req, res) => {
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
 
-/* const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'gym123',
-  database: 'gym_checkin' //CHANGE DETAILS BEFORE RUNNING
-}); */
+const db = mysql.createConnection({
+  host: "192.168.0.13",
+  user: "admin",
+  password: "uwigym",
+  database: "myuwigym"
+});
 
 db.connect((err) => {
   if (err) {
@@ -28,16 +28,24 @@ db.connect((err) => {
   }
 });
 
+// Utility function to calculate priority score
+function calculatePriorityScore(waitTime, cancellations, checkinsThisMonth) {
+  const membershipBonus = checkinsThisMonth > 10 ? 10 : 0; // VIP bonus
+  const cancellationPenalty = cancellations * 5;
+  const minutesWaiting = Math.floor((Date.now() - new Date(waitTime)) / 60000);
+  return (minutesWaiting * 2) + membershipBonus - cancellationPenalty;
+}
+
 // Check-in route
 app.post('/api/checkin', (req, res) => {
-  const { user_id } = req.body;
+  const { user_id, session_time } = req.body;
 
-  if (!user_id) {
-    return res.status(400).json({ message: 'User ID is required.' });
+  if (!user_id || !session_time) {
+    return res.status(400).json({ message: 'User ID and session time are required.' });
   }
 
+  // Update check-in count
   const updateSql = 'UPDATE users SET monthly_checkins = monthly_checkins + 1 WHERE id = ?';
-
   db.query(updateSql, [user_id], (err, result) => {
     if (err) {
       console.error('Error updating check-in count:', err);
@@ -48,6 +56,7 @@ app.post('/api/checkin', (req, res) => {
       return res.status(404).json({ message: 'User not found.' });
     }
 
+    // Insert into active check-ins
     const insertSql = 'INSERT INTO active_checkins (user_id, checkin_time) VALUES (?, NOW())';
     db.query(insertSql, [user_id], (err) => {
       if (err) {
@@ -55,7 +64,52 @@ app.post('/api/checkin', (req, res) => {
         return res.status(500).json({ message: 'Error recording active check-in.' });
       }
 
-      res.json({ message: 'Check-in successful!' });
+      // Check session capacity
+      db.query('SELECT * FROM sessions WHERE session_time = ?', [session_time], (err, sessionResults) => {
+        if (err || sessionResults.length === 0) {
+          return res.status(500).json({ message: 'Error checking session capacity.' });
+        }
+
+        const session = sessionResults[0];
+
+        if (session.booked < session.capacity) {
+          const sql = 'UPDATE sessions SET booked = booked + 1 WHERE id = ?';
+          db.query(sql, [session.id], (err) => {
+            if (err) {
+              console.error('Error booking session:', err);
+              return res.status(500).json({ message: 'Error booking session.' });
+            }
+
+            return res.json({ message: 'Check-in and session booking successful!' });
+          });
+        } else {
+          // Add to waitlist if session is full
+          db.query('SELECT monthly_checkins, cancellations FROM users WHERE id = ?', [user_id], (err, userResults) => {
+            if (err || userResults.length === 0) {
+              return res.status(500).json({ message: 'Error fetching user data.' });
+            }
+
+            const { monthly_checkins, cancellations } = userResults[0];
+            const waitTime = new Date();
+
+            const insertWaitlist = 'INSERT INTO waitlist (user_id, session_time, wait_time) VALUES (?, ?, NOW())';
+            db.query(insertWaitlist, [user_id, session_time], (err, waitlistResult) => {
+              if (err) {
+                return res.status(500).json({ message: 'Error adding to waitlist.' });
+              }
+
+              const priorityScore = calculatePriorityScore(waitTime, cancellations, monthly_checkins);
+              const updatePriority = 'UPDATE waitlist SET priority_score = ? WHERE id = ?';
+              db.query(updatePriority, [priorityScore, waitlistResult.insertId], (err) => {
+                if (err) {
+                  return res.status(500).json({ message: 'Error updating priority score.' });
+                }
+                res.json({ message: 'Session full. Added to waitlist.', priorityScore });
+              });
+            });
+          });
+        }
+      });
     });
   });
 });

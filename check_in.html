@@ -6,14 +6,43 @@
   <title>Check In</title>
   <link rel="stylesheet" href="trainer.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/progressbar.js"></script>
+  <style>
+    #occupancyWrapper {
+      width: 100px;
+      margin: 20px auto;
+      text-align: center;
+      position: relative;
+    }
+
+    #occupancyLabel {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+      color: #444;
+      font-weight: 500;
+    }
+
+    #occupancyContainer svg {
+      display: block;
+      margin: 0 auto;
+    }
+
+    .trainer-container {
+      font-family: 'Poppins', sans-serif;
+    }
+  </style>
 </head>
 
 <body>
   <div class="trainer-container">
     <h2>Check-In</h2>
 
-    <!-- Show current count -->
-    <p>Live Occupancy: <span id="active-count">0</span></p>
+    <!-- Circular progress bar with label -->
+    <div id="occupancyWrapper">
+      <div id="occupancyLabel">Live Occupancy</div>
+      <div id="occupancyContainer" style="height: 100px;"></div>
+    </div>
 
     <div class="form-group">
       <label for="user-id">Enter Your ID Number:</label>
@@ -29,22 +58,55 @@
   </div>
 
   <script>
-    // Fetch current check-in count
+    const maxCapacity = 25;
+
+    const bar = new ProgressBar.Circle('#occupancyContainer', {
+      strokeWidth: 16,
+      trailWidth: 8,
+      duration: 1000,
+      easing: 'easeInOut',
+      text: {
+        autoStyleContainer: false
+      },
+      from: { color: '#00b894', width: 16 },
+      to: { color: '#d63031', width: 16 },
+      step: function(state, circle) {
+        const count = Math.round(circle.value() * maxCapacity);
+        const percent = circle.value();
+
+        const red = Math.min(255, Math.round(255 * percent));
+        const green = Math.max(0, 180 - Math.round(180 * percent));
+        const color = `rgb(${red}, ${green}, 50)`;
+
+        circle.path.setAttribute('stroke', color);
+        circle.setText(count);
+        circle.text.style.fontFamily = '"Poppins", sans-serif';
+        circle.text.style.fontSize = '1.6rem';
+        circle.text.style.fontWeight = '600';
+        circle.text.style.color = '#333';
+        circle.text.style.position = 'absolute';
+        circle.text.style.top = '50%';
+        circle.text.style.left = '50%';
+        circle.text.style.transform = 'translate(-50%, -50%)';
+      }
+    });
+
     async function updateActiveCount() {
       try {
         const res = await fetch('/api/active-count');
         const data = await res.json();
-        document.getElementById('active-count').innerText = data.count;
+        const count = data.count;
+        const percentage = Math.min(count / maxCapacity, 1);
+        bar.animate(percentage);
       } catch (error) {
         console.error('Error fetching active count:', error);
+        bar.setText('Err');
       }
     }
 
-    // Call it on load and every 30 seconds
     updateActiveCount();
-    setInterval(updateActiveCount, 30000);
+    setInterval(updateActiveCount, 5000);
 
-    // Handle check-in submission
     document.getElementById('submit-checkin').addEventListener('click', async () => {
       const userId = document.getElementById('user-id').value.trim();
 
@@ -64,18 +126,16 @@
         document.getElementById('status-msg').innerText = data.message;
 
         if (response.ok) {
-          // Update live count
           updateActiveCount();
 
-          // Schedule auto-checkout after 1 hour
           setTimeout(async () => {
             await fetch('/api/checkout', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ user_id: userId })
             });
-            updateActiveCount(); // Refresh count after auto-checkout
-          }, 3600000); // 1 hour = 3600000ms
+            updateActiveCount();
+          }, 3600000);
         }
       } catch (err) {
         console.error('Error during check-in:', err);

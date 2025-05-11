@@ -15,11 +15,11 @@ function translatePage(lang = "en") {
 }
 
 // language.js
-let currentLang = localStorage.getItem('lang') || 'en';
+let currentLang = sessionStorage.getItem('lang') || 'en';
 
 function setLanguage(lang) {
     currentLang = lang;
-    localStorage.setItem('lang', lang);
+    sessionStorage.setItem('lang', lang);
     translatePage();
 }
 

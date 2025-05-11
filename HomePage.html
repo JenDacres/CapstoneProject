@@ -20,12 +20,17 @@
 
   <script>
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const body = document.body;
-    const themeBtn = document.getElementById("theme-btn");
+    const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+    const noprefers = window.matchMedia('(prefers-color-scheme: no-preference)').matches;
 
     // Apply system preference on first load
     if (prefersDark) {
       body.classList.add('dark-mode');
+    }
+    else if (prefersLight) {
+      body.classList.add('light-mode');
+    } else if (noprefers) {
+      body.classList.add('no-preference');
     }
   </script>
 </body>

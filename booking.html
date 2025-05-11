@@ -28,36 +28,26 @@
     <div class="calendar-view fade" id="calendar-view"></div>
   </div>
 
-  <!-- Trainer Selection Modal -->
+  <!-- Trainer Selection Modal (keep only one!) -->
   <div class="trainer-modal" id="trainerModal" style="display: none;">
     <div class="modal-content">
+      <span class="close-btn" onclick="closeTrainerModal()">&times;</span>
       <h2>Select a Trainer</h2>
-      <select id="trainerSelect"></select>
+      <p id="slotInfo">Slot Info</p>
+
+      <select id="trainerSelect">
+        <option value="">-- Select Trainer --</option>
+      </select>
+
       <div class="modal-actions">
-        <button onclick="confirmTrainer()">Request</button>
-        <button onclick="skipTrainer()">Skip</button>
+        <button onclick="bookSlot(true)">Request</button>
+        <button onclick="bookSlot(false)">Skip</button>
       </div>
     </div>
   </div>
 
+
   <script src="booking.js" defer></script>
-  <div id="trainerModal" class="modal">
-    <div class="modal-content">
-      <span class="close-btn" onclick="closeTrainerModal()">&times;</span>
-      <h2>Select Trainer</h2>
-      <p id="slotInfo">Slot Info</p>
-  
-      <select id="trainerDropdown">
-        <option value="">-- Select Trainer --</option>
-      </select>
-  
-      <div class="modal-actions">
-        <button onclick="requestTrainer()">Request</button>
-        <button onclick="skipTrainer()">Skip</button>
-      </div>
-    </div>
-  </div>
-  
 </body>
 
 </html>

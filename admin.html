@@ -1,182 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Gym Admin Portal</title>
-  <link rel="stylesheet" href="admin.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-</head>
-<body onload="loadAdminPage('dashboard')">
-  <div class="container">
-    <header>
-      <h1>My UWI Gym Admin Dashboard</h1>
-    </header>
-    <main id="adminMainContent"></main>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gym Admin Portal</title>
+    <link rel="stylesheet" href="admin.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body onload="loadAdminPage('dashboard')">
+    <div class="container">
+      <header>
+        <h1>My UWI Gym Admin Dashboard</h1>
+      </header>
+      <main id="adminMainContent"></main>
+    </div>
 
-  <script>
-    function loadAdminPage(pageId) {
-      let content = '';
+    <script>
+      function loadAdminPage(pageId) {
+        let content = "";
 
-      switch (pageId) {
-        case 'dashboard':
-          content = `
-            <div class="button-container">
-              <button onclick="loadAdminPage('addTrainer')">Add Trainer</button>
-              <button onclick="window.location.href='check_in.html'">Check-In User</button>
-              <button onclick="loadAdminPage('sendAlerts')">Send Alerts</button>
-              <button onclick="loadAdminPage('viewReports')">View Reports</button>
-              <button onclick="loadAdminPage('viewBookings')">View Bookings</button>
-              <button onclick="loadAdminPage('approveAccounts')">Approve Accounts</button>
-            </div>
-          `;
-          document.getElementById('adminMainContent').innerHTML = content;
-          break;
+        switch (pageId) {
+          case "dashboard":
+            content = `
+              <div class="button-container">
+                <button onclick="loadAdminPage('addTrainer')">Add Trainer</button>
+                <button onclick="window.location.href='check_in.html'">Check-In User</button>
+                <button onclick="loadAdminPage('sendAlerts')">Send Alerts</button>
+                <button onclick="loadAdminPage('viewReports')">View Reports</button>
+                <button onclick="loadAdminPage('viewBookings')">View Bookings</button>
+                <button onclick="loadAdminPage('approveAccounts')">Approve Accounts</button>
+              </div>
+            `;
+            document.getElementById("adminMainContent").innerHTML = content;
+            break;
 
-        case 'addTrainer':
-          content = `
-            <h2>Add Trainer</h2>
-            <input type="text" id="firstName" placeholder="First Name" required />
-            <input type="text" id="lastName" placeholder="Last Name" required />
-            <input type="email" id="email" placeholder="Email" required />
-            <div class="button-container">
-              <button onclick="createTrainer()">Create Trainer</button>
-              <button onclick="loadAdminPage('dashboard')">← Back</button>
-            </div>
-          `;
-          document.getElementById('adminMainContent').innerHTML = content;
-          break;
+          case "addTrainer":
+            content = `
+              <h2>Add Trainer</h2>
+              <input type="text" id="firstName" placeholder="First Name" required />
+              <input type="text" id="lastName" placeholder="Last Name" required />
+              <input type="email" id="email" placeholder="Email" required />
+              <div class="button-container">
+                <button onclick="createTrainer()">Create Trainer</button>
+                <button onclick="loadAdminPage('dashboard')">← Back</button>
+              </div>
+            `;
+            document.getElementById("adminMainContent").innerHTML = content;
+            break;
 
-        case 'sendAlerts':
-          content = `
-            <h2>Send Alert</h2>
-            <p>Send urgent messages to all members.</p>
-            <textarea id="alertText" placeholder="Type your alert message..."></textarea>
-            <div class="button-container">
-              <button onclick="sendAlert()">Send Alert</button>
-              <button onclick="loadAdminPage('dashboard')">← Back</button>
-            </div>
-          `;
-          document.getElementById('adminMainContent').innerHTML = content;
-          break;
+          case "sendAlerts":
+            content = `
+              <h2>Send Alert</h2>
+              <p>Send urgent messages to all members.</p>
+              <textarea id="alertText" placeholder="Type your alert message..."></textarea>
+              <div class="button-container">
+                <button onclick="sendAlert()">Send Alert</button>
+                <button onclick="loadAdminPage('dashboard')">← Back</button>
+              </div>
+            `;
+            document.getElementById("adminMainContent").innerHTML = content;
+            break;
 
-        case 'viewReports':
-          fetch("http://localhost:5000/admin/reports")
-            .then(res => res.json())
-            .then(data => {
-              if (data.length === 0) {
-                content = `<p>No reports submitted yet.</p>`;
-              } else {
-                const listItems = data.map(r =>
-                  `<li><strong>${r.full_name}</strong>: ${r.message}<br><small>${new Date(r.created_at).toLocaleString()}</small></li>`
-                ).join("");
+          case "viewReports":
+            fetch("http://localhost:5000/admin/reports")
+              .then((res) => res.json())
+              .then((data) => {
+                if (data.length === 0) {
+                  content = `<p>No reports submitted yet.</p>`;
+                } else {
+                  const tableRows = data
+                    .map(
+                      (r) => `
+                        <tr>
+                          <td>${r.id}</td>
+                          <td>${r.message}</td>
+                          <td>${new Date(r.created_at).toLocaleString()}</td>
+                        </tr>
+                      `
+                    )
+                    .join("");
+
+                  content = `
+                    <h2>All Reports</h2>
+                    <table border="1" cellpadding="8" cellspacing="0">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Message</th>
+                          <th>Timestamp</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${tableRows}
+                      </tbody>
+                    </table>
+                    <br>
+                    <button onclick="loadAdminPage('dashboard')">← Back</button>
+                  `;
+                }
+                document.getElementById("adminMainContent").innerHTML = content;
+              });
+            break;
+
+          case "viewBookings":
+            fetch("http://localhost:5000/admin/bookings")
+              .then((res) => res.json())
+              .then((data) => {
+                if (data.length === 0) {
+                  content = `<p>No bookings found.</p>`;
+                } else {
+                  const tableRows = data
+                    .map(
+                      (b) => `
+                        <tr>
+                          <td>${b.id}</td>
+                          <td>${b.user_id}</td>
+                          <td>${b.date}</td>
+                          <td>${b.time_slot}</td>
+                          <td>${b.status}</td>
+                          <td>${b.trainer_id || "—"}</td>
+                        </tr>
+                      `
+                    )
+                    .join("");
+
+                  content = `
+                    <h2>Manage Bookings</h2>
+                    <table border="1" cellpadding="8" cellspacing="0">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>User ID</th>
+                          <th>Date</th>
+                          <th>Time Slot</th>
+                          <th>Status</th>
+                          <th>Trainer ID</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${tableRows}
+                      </tbody>
+                    </table>
+                    <button onclick="loadAdminPage('dashboard')">← Back</button>
+                  `;
+                }
+                document.getElementById("adminMainContent").innerHTML = content;
+              });
+            break;
+
+          case "approveAccounts":
+            fetch("http://localhost:5000/admin/pending-users")
+              .then((res) => res.json())
+              .then((data) => {
+                const list = data
+                  .map(
+                    (u) => `
+                      <li>${u.full_name} (${u.role}) 
+                        <button onclick="respondToUser(${u.id}, true)">Approve</button> 
+                        <button onclick="respondToUser(${u.id}, false)">Reject</button>
+                      </li>`
+                  )
+                  .join("");
                 content = `
-                  <h2>View Reports</h2>
-                  <ul>${listItems}</ul>
+                  <h2>Approve Accounts</h2>
+                  <div class="scrollable-list">
+                    <ul>${list}</ul>
+                  </div>
                   <button onclick="loadAdminPage('dashboard')">← Back</button>
                 `;
-              }
-              document.getElementById('adminMainContent').innerHTML = content;
-            });
-          break;
-
-        case 'viewBookings':
-          fetch("http://localhost:5000/admin/bookings")
-            .then(res => res.json())
-            .then(data => {
-              const listItems = data.map(b =>
-                `<li>${b.date} ${b.time_slot} - ${b.full_name} (${b.status})</li>`
-              ).join("");
-              content = `
-                <h2>Manage Bookings</h2>
-                <ul>${listItems}</ul>
-                <button onclick="loadAdminPage('dashboard')">← Back</button>
-              `;
-              document.getElementById('adminMainContent').innerHTML = content;
-            });
-          break;
-
-        case 'approveAccounts':
-          fetch("http://localhost:5000/admin/pending-users")
-            .then(res => res.json())
-            .then(data => {
-              const list = data.map(u =>
-                `<li>${u.full_name} (${u.role}) 
-                  <button onclick="respondToUser(${u.id}, true)">Approve</button> 
-                  <button onclick="respondToUser(${u.id}, false)">Reject</button>
-                </li>`
-              ).join("");
-              content = `
-                <h2>Approve Accounts</h2>
-                <div class="scrollable-list">
-                  <ul>${list}</ul>
-                </div>
-                <button onclick="loadAdminPage('dashboard')">← Back</button>
-              `;
-              document.getElementById('adminMainContent').innerHTML = content;
-            });
-          break;
-      }
-    }
-
-    function sendAlert() {
-      const alertText = document.getElementById('alertText').value.trim();
-      if (!alertText) {
-        alert('Please enter a message to send.');
-        return;
+                document.getElementById("adminMainContent").innerHTML = content;
+              });
+            break;
+        }
       }
 
-      fetch("http://localhost:5000/send-alert", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: alertText })
-      })
-        .then(res => res.json())
-        .then(data => {
-          alert(data.message || "Alert sent!");
-          loadAdminPage('dashboard');
-        });
-    }
+      function sendAlert() {
+        const alertText = document.getElementById("alertText").value.trim();
+        if (!alertText) {
+          alert("Please enter a message to send.");
+          return;
+        }
 
-    function respondToUser(id, approve) {
-      fetch("http://localhost:5000/admin/approve-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, approve })
-      })
-        .then(res => res.json())
-        .then(data => {
-          alert(data.message);
-          loadAdminPage("approveAccounts");
-        });
-    }
-
-    function createTrainer() {
-      const firstName = document.getElementById('firstName').value.trim();
-      const lastName = document.getElementById('lastName').value.trim();
-      const email = document.getElementById('email').value.trim();
-
-      if (!firstName || !lastName || !email) {
-        alert("Please fill in all fields.");
-        return;
-      }
-
-      fetch("http://localhost:5000/admin/add-trainer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName, lastName, email })
-      })
-        .then(res => res.json())
-        .then(data => {
-          alert(data.message);
-          loadAdminPage('dashboard');
+        fetch("http://localhost:5000/send-alert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: alertText }),
         })
-        .catch(err => {
-          console.error(err);
-          alert("Failed to create trainer.");
-        });
-    }
-  </script>
-</body>
+          .then((res) => res.json())
+          .then((data) => {
+            alert(data.message || "Alert sent!");
+            loadAdminPage("dashboard");
+          });
+      }
+
+      function respondToUser(id, approve) {
+        fetch("http://localhost:5000/admin/approve-user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, approve }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            alert(data.message);
+            loadAdminPage("approveAccounts");
+          });
+      }
+
+      function createTrainer() {
+        const firstName = document.getElementById("firstName").value.trim();
+        const lastName = document.getElementById("lastName").value.trim();
+        const email = document.getElementById("email").value.trim();
+
+        if (!firstName || !lastName || !email) {
+          alert("Please fill in all fields.");
+          return;
+        }
+
+        fetch("http://localhost:5000/admin/add-trainer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ firstName, lastName, email }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            alert(data.message);
+            loadAdminPage("dashboard");
+          })
+          .catch((err) => {
+            console.error(err);
+            alert("Failed to create trainer.");
+          });
+      }
+    </script>
+  </body>
 </html>

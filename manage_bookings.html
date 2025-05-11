@@ -33,7 +33,6 @@
   <div id="toast"></div>
 
   <script>
-    const userId = localStorage.getItem("user_id");
     const bookingsList = document.getElementById("bookingsList");
     const editModal = document.getElementById("editModal");
     const newTimeSlot = document.getElementById("newTimeSlot");
@@ -47,78 +46,27 @@
     }
 
     function loadBookings() {
-      fetch(`http://localhost:5000/my-bookings/${userId}`)
-        .then(res => res.json())
-        .then(bookings => {
-          bookingsList.innerHTML = '';
-
-          if (bookings.length === 0) {
-            bookingsList.innerHTML = `<p data-i18n="noBookings">${getTranslation("noBookings")}</p>`;
-            translatePage();
-            return;
-          }
-
-          bookings.forEach(booking => {
-            const li = document.createElement('li');
+      fetch("http://localhost:5000/my-bookings", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          bookingsList.innerHTML = "";
+          data.forEach(booking => {
+            const li = document.createElement("li");
             li.innerHTML = `
-              <span class="${booking.status === 'Confirmed' ? 'confirmed' : 'cancelled'}">
-                <strong>${booking.date}</strong> | ${booking.time_slot}
-              </span>
-              <div>
-                <button class="edit" onclick="openEdit(${booking.id}, '${booking.date}')" data-i18n="edit">${getTranslation("edit")}</button>
-                <button class="delete" onclick="deleteBooking(${booking.id})" data-i18n="delete">${getTranslation("delete")}</button>
-              </div>
+              <span>${booking.date} - ${booking.time}</span>
+              <button onclick="openEditModal(${booking.id})" data-i18n="edit">Edit</button>
+              <button onclick="cancelBooking(${booking.id})" data-i18n="cancel">Cancel</button>
             `;
             bookingsList.appendChild(li);
-            translatePage(); // ensure buttons are translated
           });
-        });
-    }
-
-    function openEdit(id, date) {
-      editingBookingId = id;
-      editModal.style.display = "flex";
-
-      fetch(`http://localhost:5000/available-times/${date}`)
-        .then(res => res.json())
-        .then(times => {
-          newTimeSlot.innerHTML = times.length
-            ? times.map(slot => `<option value="${slot}">${slot}</option>`).join("")
-            : `<option disabled>${getTranslation("noSlots") || "No available slots"}</option>`;
-        });
-    }
-
-    function confirmEdit() {
-      const selectedTime = newTimeSlot.value;
-      if (!selectedTime) {
-        showToast(getTranslation("noTimeSelected") || "No time selected!");
-        return;
-      }
-
-      fetch(`http://localhost:5000/update-booking/${editingBookingId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ time_slot: selectedTime })
-      })
-        .then(res => res.json())
-        .then(data => {
-          showToast(data.message);
-          closeModal();
-          loadBookings();
-        });
-    }
-
-    function deleteBooking(id) {
-      const confirmMsg = getTranslation("deleteConfirm") || "Are you sure you want to cancel this booking?";
-      if (!confirm(confirmMsg)) return;
-
-      fetch(`http://localhost:5000/cancel-booking/${id}`, { method: "DELETE" })
-        .then(res => res.text())
-        .then(msg => {
-          showToast(msg);
-          loadBookings();
-        });
-    }
+        })
+        .catch(error => console.error("Error loading bookings:", error));
+    } // Closing the loadBookings function
 
     function closeModal() {
       editModal.style.display = "none";
@@ -134,7 +82,7 @@
     }
 
     loadBookings();
-    setInterval(loadBookings, 120000);
+    setInterval(loadBookings, 120000); // auto-refresh every 2 minutes
   </script>
 </body>
 
