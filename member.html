@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MyUWIGym | Member Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="translations.js"></script>
+  <script src="language.js"></script>
 </head>
 
 <style>
@@ -185,12 +186,9 @@
   }
 </style>
 
+
 <body onload="loadPage()">
   <div class="container" id="main-content"></div>
-
- <!-- <div class="floating-plus">
-    <button id="bookBtn" class="add-button"><i class="fas fa-plus"></i></button>
-  </div> -->
 
   <nav class="bottom-nav">
     <button id="homeBtn" class="active"><i class="fas fa-home"></i></button>
@@ -199,7 +197,7 @@
     <button id="settingsBtn"><i class="fas fa-cog"></i></button>
   </nav>
 
-  <button class="chat-toggle" onclick="toggleChat()">💬</button>
+  <!--<button class="chat-toggle" onclick="toggleChat()">💬</button>-->
 
   <div class="chatbox">
     <div class="chatbox-header">
@@ -208,8 +206,8 @@
     </div>
     <div class="chatbox-messages"></div>
     <div class="chatbox-input">
-      <input type="text" id="userInput" placeholder="Ask something..." />
-      <button onclick="sendMessage()">Send</button>
+      <input type="text" id="userInput" data-i18n="chatPlaceholder" placeholder="Ask something..." />
+      <button onclick="sendMessage()" data-i18n="send">Send</button>
     </div>
   </div>
 
@@ -219,7 +217,7 @@
 
     function getGreeting() {
       const hour = new Date().getHours();
-      return hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+      return hour < 12 ? "greetingMorning" : hour < 18 ? "greetingAfternoon" : "greetingEvening";
     }
 
     async function getWeather() {
@@ -236,12 +234,10 @@
 
     async function loadOccupancyChart() {
       try {
-        const res = await fetch("http://localhost:3000/occupancy"); // Update this if needed
+        const res = await fetch("http://localhost:3000/occupancy");
         const data = await res.json();
-
         const labels = data.map(entry => entry.time);
         const values = data.map(entry => entry.occupancy);
-
         const ctx = document.getElementById('occupancyChart').getContext('2d');
 
         if (occupancyChart) {
@@ -299,21 +295,24 @@
 
       const profilePicUrl = sessionStorage.getItem("profile_picture") || "profile_pic.png";
       const weather = await getWeather();
-      const greeting = getGreeting();
+      const greetingKey = getGreeting();
+      const greetingText = translateText(greetingKey);
+      const weatherIntro = translateText("weatherIntro");
+      const weatherText = `${weatherIntro} ${weather}`;
 
       document.getElementById('main-content').innerHTML = `
         <a href="member_settings.html">
           <img src="${profilePicUrl}" class="profile-pic" alt="Profile Picture">
         </a>
-        <h1>${greeting}, ${fullName.split(' ')[0]}</h1>
-        <p class="weather-text">The weather forecast at the UWI Gym: <em>${weather}</em>.</p>
+        <h1>${greetingText} ${fullName.split(' ')[0]}</h1>
+        <p class="weather-text">${weatherText}</p>
         <div class="plan-box">
-          <strong>Live Occupancy</strong><br>
+          <strong data-i18n="liveOccupancy">Live Occupancy</strong><br>
           <canvas id="occupancyChart" width="100%" height="100"></canvas>
         </div>
         <div class="activity-box" style="text-align: center;">
-          <strong>Ready to Work Out?</strong><br><br>
-          <button onclick="window.location.href='booking.html'" style="
+          <strong data-i18n="readyWorkout">Ready to Work Out?</strong><br><br>
+          <button onclick="window.location.href='booking.html'" data-i18n="bookNow" style="
             background-color: #e53935;
             color: white;
             border: none;
@@ -326,12 +325,13 @@
       `;
 
       loadOccupancyChart();
+      translatePage();
     }
 
-    function toggleChat() {
+   /* function toggleChat() {
       const chatbox = document.querySelector(".chatbox");
       chatbox.style.display = chatbox.style.display === "none" || !chatbox.style.display ? "block" : "none";
-    }
+   }*/
 
     function sendMessage() {
       const input = document.getElementById("userInput");
@@ -352,11 +352,9 @@
 
     document.getElementById("homeBtn").addEventListener("click", () => loadPage());
     document.getElementById("manageBtn").addEventListener("click", () => window.location.href = "manage_bookings.html");
-    document.getElementById("bookBtn").addEventListener("click", () => window.location.href = "booking.html");
     document.getElementById("messagesBtn").addEventListener("click", () => toggleChat());
     document.getElementById("settingsBtn").addEventListener("click", () => window.location.href = "member_settings.html");
 
-    // Refresh occupancy every 30 seconds
     setInterval(loadOccupancyChart, 30000);
   </script>
 </body>

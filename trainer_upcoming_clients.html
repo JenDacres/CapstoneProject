@@ -17,7 +17,12 @@
   </div>
 
   <script>
-    const trainerId = localStorage.getItem('user_id'); // Trainer ID from login
+    const trainerId = sessionStorage.getItem('user_id'); // Trainer ID from login
+    console.log("Trainer ID:", trainerId);
+    if (!trainerId) {
+      alert("Trainer ID not found. Please log in again.");
+      window.location.href = "LoginScreen.html"; // Redirect to login
+    }
     let lastRemovedClient = null;
 
     function loadClients() {

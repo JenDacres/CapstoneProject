@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gym Booking Calendar</title>
   <link rel="stylesheet" href="booking.css" />
+  <script src="translations.js"></script>
+  <script src="language.js"></script>
 </head>
 
 <body>
@@ -13,15 +15,15 @@
     <div class="calendar-header">
       <h1 id="calendar-year">2024</h1>
       <div class="view-switcher">
-        <button onclick="setView('day')">Day</button>
-        <button onclick="setView('week')">Week</button>
-        <button onclick="setView('month')">Month</button>
+        <button data-i18n="day" onclick="setView('day')">Day</button>
+        <button data-i18n="week" onclick="setView('week')">Week</button>
+        <button data-i18n="month" onclick="setView('month')">Month</button>
       </div>
     </div>
 
     <div class="calendar-controls">
       <button id="prev-btn">‹</button>
-      <h2 id="current-label">Today</h2>
+      <h2 id="current-label" data-i18n="today">Today</h2>
       <button id="next-btn">›</button>
     </div>
 
@@ -32,16 +34,16 @@
   <div class="trainer-modal" id="trainerModal" style="display: none;">
     <div class="modal-content">
       <span class="close-btn" onclick="closeTrainerModal()">&times;</span>
-      <h2>Select a Trainer</h2>
-      <p id="slotInfo">Slot Info</p>
+      <h2 data-i18n="selectTrainer">Select a Trainer</h2>
+      <p id="slotInfo" data-i18n="slotInfo">Slot Info</p>
 
       <select id="trainerSelect">
-        <option value="">-- Select Trainer --</option>
+        <option value="" data-i18n="selectTrainerOption">-- Select Trainer --</option>
       </select>
 
       <div class="modal-actions">
-        <button onclick="bookSlot(true)">Request</button>
-        <button onclick="bookSlot(false)">Skip</button>
+        <button data-i18n="request" onclick="bookSlot(true)">Request</button>
+        <button data-i18n="skip" onclick="bookSlot(false)">Skip</button>
       </div>
     </div>
   </div>

@@ -125,7 +125,7 @@ function renderDayView(date) {
     if (bookedSlots[dateKey] && bookedSlots[dateKey].includes(time)) {
       div.classList.add("booked");
       div.textContent = `${time} (Waitlist)`;
-      div.onclick = () => alert("This slot is full. You've been added to the waitlist (Placeholder).");
+      div.onclick = () => alert("This slot is full. You've been added to the waitlist.");
     } else {
       div.textContent = time;
       div.onclick = () => openTrainerModal(dateKey, time);
@@ -319,6 +319,12 @@ function bookSlot(wantsTrainer) {
     return;
   }
 
+  const token = sessionStorage.getItem("token");
+  if (!token) {
+    alert("You need to be logged in to book a slot.");
+    return;
+  }
+
   console.log("Booking slot:", {
     date: selectedDate,
     time_slot: selectedTime,
@@ -350,16 +356,3 @@ function bookSlot(wantsTrainer) {
 
 
 
-function requestWithTrainer() {
-  const trainerDropdown = document.getElementById("trainerSelect");
-  const trainerIdToSend = trainerDropdown.value;
-
-  if (!trainerIdToSend) {
-    alert("Please select a trainer.");
-    return;
-  }
-
-  bookSlot(trainerIdToSend, true); // pass trainerId and a flag indicating this is a trainer request
-}
-
-document.getElementById("trainerModalClose").onclick = closeTrainerModal;

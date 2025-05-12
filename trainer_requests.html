@@ -20,9 +20,10 @@
   </div>
 
   <script>
-    const trainerId = localStorage.getItem("user_id"); // Ensure this is saved during login
+    const trainerId = sessionStorage.getItem("user_id"); // Ensure this is saved during login
 
     function loadTrainerRequests() {
+      console.log("Trainer ID:", trainerId);
       fetch(`http://localhost:5000/trainer-requests/${trainerId}`)
         .then(res => res.json())
         .then(data => {
@@ -57,13 +58,17 @@
         .catch(err => {
           console.error("Error loading requests:", err);
         });
+      setTimeout(loadTrainerRequests, 1000);
+
     }
 
-    function handleDecision(requestId, status, item) {
+    function handleDecision(request_id, status, item) {
+      console.log("Sending decision:", { id: request_id, response: status });
+
       fetch("http://localhost:5000/respond-trainer-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId, response: status })
+        body: JSON.stringify({ id: request_id, response: status })
       })
         .then(res => res.json())
         .then(data => {
@@ -75,27 +80,14 @@
           msg.textContent = `Request ${status}`;
           item.appendChild(msg);
 
-          notifyClientByWhatsApp(requestId, status);
         })
         .catch(err => {
           console.error("Failed to update request:", err);
         });
     }
 
-    function notifyClientByWhatsApp(requestId, status) {
-      fetch("http://localhost:5000/send-trainer-alert", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId, status })
-      })
-        .then(res => res.json())
-        .then(data => {
-          console.log("WhatsApp message sent:", data.message);
-        })
-        .catch(err => {
-          console.error("Failed to send WhatsApp message:", err);
-        });
-    }
+
+
 
     window.onload = loadTrainerRequests;
   </script>

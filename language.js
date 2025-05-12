@@ -1,20 +1,3 @@
-
-function translatePage(lang = "en") {
-    const t = translations[lang] || translations.en;
-
-    document.querySelectorAll("[data-i18n]").forEach(el => {
-        const key = el.getAttribute("data-i18n");
-        if (t[key]) {
-            if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
-                el.placeholder = t[key];
-            } else {
-                el.textContent = t[key];
-            }
-        }
-    });
-}
-
-// language.js
 let currentLang = sessionStorage.getItem('lang') || 'en';
 
 function setLanguage(lang) {
@@ -24,18 +7,21 @@ function setLanguage(lang) {
 }
 
 function translatePage() {
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        const translation = translations[currentLang][key];
-        if (translation) {
-            if (el.tagName.toLowerCase() === 'input') {
-                el.placeholder = translation;
-            } else {
-                el.textContent = translation;
-            }
-        }
-    });
+  const elements = document.querySelectorAll("[data-i18n]");
+  elements.forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    const translated = translateText(key);
+    
+    if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+      el.placeholder = translated;
+    } else if (el.tagName === "OPTION") {
+      el.textContent = translated;
+    } else {
+      el.innerText = translated;
+    }
+  });
 }
+
 
 function translateText(key, params = {}) {
     let text = translations[currentLang][key] || key;
@@ -45,7 +31,6 @@ function translateText(key, params = {}) {
     return text;
 }
 
-// Initialize translation on page load
 document.addEventListener('DOMContentLoaded', () => {
     translatePage();
 });

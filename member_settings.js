@@ -39,7 +39,7 @@ document.getElementById("passwordForm").addEventListener("submit", async functio
 // Language preference
 document.getElementById("languageSelect").addEventListener("change", (e) => {
     const selectedLang = e.target.value;
-    localStorage.setItem("preferredLanguage", selectedLang);
+    sessionStorage.setItem("preferredLanguage", selectedLang);
     alert(`Language set to: ${selectedLang}`);
 });
 

@@ -256,41 +256,46 @@ app.post("/login", (req, res) => {
 
 
 // Book a slot
-app.post('/book-slot', authenticateToken, async (req, res) => {
-  console.log('Request Body:', req.body);
 
-  try {
+app.post('/book-slot', authenticateToken, (req, res) => {
     const { date, time_slot, trainer_id } = req.body;
-    const user_id = req.user.id;
+    console.log("User Object:", req.user);
+    const user_id = req.user.userId;
+    console.log("Extracted user id:", user_id);
 
-    // Insert booking into the bookings table
-    const [bookingResult] = await pool.execute(
-      `INSERT INTO bookings (user_id, date, time_slot, trainer_id)
-       VALUES (?, ?, ?, ?)`,
-      [user_id, date, time_slot, trainer_id || null]
-    );
-
-    const bookingId = bookingResult.insertId;
-
-    // If trainer is selected, insert a trainer request using the booking ID
-    if (trainer_id) {
-      await pool.execute(
-        `INSERT INTO trainer_requests (booking_id, trainer_id)
-         VALUES (?, ?)`,
-        [bookingId, trainer_id]
-      );
+    if (!date || !time_slot) {
+        return res.status(400).json({ message: 'Missing date or time_slot' });
     }
 
-    res.status(200).json({
-      message: trainer_id
-        ? "Slot booked and trainer request submitted!"
-        : "Slot booked successfully without trainer."
-    });
+    // Check if slot is already full (e.g., 5 people max per slot)
+    const checkQuery = `SELECT COUNT(*) AS count FROM bookings WHERE date = ? AND time_slot = ? AND status = 'Booked'`;
+    db.query(checkQuery, [date, time_slot], (err, results) => {
+        if (err) return res.status(500).json({ message: 'Database error', error: err });
 
-  } catch (error) {
-    console.error('Error booking slot:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
+        const count = results[0].count;
+        if (count >= 5) {
+            return res.status(409).json({ message: 'This time slot is full. You are added to waitlist.' });
+        }
+
+        // Insert the booking
+        const insertBooking = `INSERT INTO bookings (user_id, date, time_slot) VALUES (?, ?, ?)`;
+        db.query(insertBooking, [user_id, date, time_slot], (err, bookingResult) => {
+            console.error("SQL Insert Error:", err);
+            if (err) return res.status(500).json({ message: 'Booking failed', error: err });
+
+            const booking_id = bookingResult.insertId;
+
+            if (trainer_id) {
+                const insertTrainerReq = `INSERT INTO trainer_requests (booking_id, trainer_id) VALUES (?, ?)`;
+                db.query(insertTrainerReq, [booking_id, trainer_id], (err) => {
+                    if (err) return res.status(500).json({ message: 'Trainer request failed', error: err });
+                    return res.json({ message: 'Slot booked and trainer request sent!' });
+                });
+            } else {
+                return res.json({ message: 'Slot booked successfully without trainer' });
+            }
+        });
+    });
 });
 
 
@@ -443,27 +448,24 @@ app.get("/trainers", (req, res) => {
 });
 
 
-// Request trainer
-app.post("/request-trainer", (req, res) => {
-    const { bookingId, trainerId } = req.body;
-    db.query("INSERT INTO trainer_requests (booking_id, trainer_id) VALUES (?, ?)", [bookingId, trainerId], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: "Trainer request submitted!" });
-    });
-});
-
-
 // Trainer requests
 app.get("/trainer-requests/:trainerId", (req, res) => {
-    const { trainerId } = req.params;
-    const sql = `
-      SELECT tr.id, b.date, b.time_slot, u.full_name
-      FROM trainer_requests tr
-      JOIN bookings b ON tr.booking_id = b.id
-      JOIN users u ON b.user_id = u.user_id
-      WHERE tr.trainer_id = ? AND tr.status = 'Pending'
-    `;
-    db.query(sql, [trainerId], (err, results) => {
+    const trainerId = req.params.trainerId;
+
+    const query = `
+    SELECT tr.id, u.full_name, b.date, b.time_slot
+    FROM trainer_requests tr
+    JOIN bookings b ON tr.booking_id = b.id
+    JOIN users u ON b.user_id = u.user_id
+    WHERE tr.trainer_id = ? AND tr.status = 'Pending'
+    ORDER BY b.date, b.time_slot;
+  `;
+
+    db.query(query, [trainerId], (err, results) => {
+        if (err) {
+            console.error("Error fetching trainer requests:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
         res.json(results);
     });
 });
@@ -471,67 +473,79 @@ app.get("/trainer-requests/:trainerId", (req, res) => {
 
 // Trainer responds
 app.post("/respond-trainer-request", async (req, res) => {
-    const { request_id, response } = req.body;
+  const { id, response } = req.body;
 
-    try {
-        // Update the trainer request status
-        await db.promise().query(
-            "UPDATE trainer_requests SET status = ? WHERE request_id = ?",
-            [response, request_id]
+  try {
+    // Update trainer request status
+    await db.promise().query(
+      "UPDATE trainer_requests SET status = ? WHERE id = ?",
+      [response, id]
+    );
+
+    // Fetch related data
+    const [requestData] = await db.promise().query(
+      `SELECT tr.*, u.email, u.full_name, b.date, b.time_slot
+       FROM trainer_requests tr
+       JOIN bookings b ON tr.booking_id = b.id
+       JOIN users u ON b.user_id = u.user_id
+       WHERE tr.id = ?`,
+      [id]
+    );
+
+    if (requestData.length > 0) {
+      const {
+        email,
+        full_name,
+        date,
+        time_slot
+      } = requestData[0];
+
+      if (response === "Accepted") {
+        await sendEmail(
+          email,
+          "Trainer Request Approved",
+          `Hello ${full_name},\n\nYour trainer has accepted your session request for ${date} at ${time_slot}.\n\nSee you at the gym!\n\n- MyUWIGym`
         );
-
-        if (response === "accepted") {
-            // Fetch related booking and user info
-            const [requestData] = await db.promise().query(
-                `SELECT tr.*, u.email, u.full_name, b.date, b.time_slot
-         FROM trainer_requests tr
-         JOIN users u ON tr.user_id = u.user_id
-         JOIN bookings b ON tr.booking_id = b.booking_id
-         WHERE tr.request_id = ?`,
-                [request_id]
-            );
-
-            if (requestData.length > 0) {
-                const {
-                    email,
-                    full_name,
-                    date,
-                    time_slot
-                } = requestData[0];
-
-                // Send email
-                await sendEmail(
-                    email,
-                    "Trainer Request Approved",
-                    `Hello ${full_name},\n\nGood news! Your trainer has accepted your session request for ${date} at ${time_slot}.\n\nSee you at the gym!\n\n- MyUWIGym`
-                );
-            }
-        }
-
-        res.status(200).json({ message: "Trainer response recorded successfully." });
-    } catch (err) {
-        console.error("Trainer response error:", err);
-        res.status(500).json({ error: "Internal server error" });
+      }
+      // No need to update bookings.status
     }
+
+    res.status(200).json({ message: "Trainer response recorded successfully." });
+  } catch (err) {
+    console.error("Trainer response error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+// Trainer - Get upcoming clients
+app.get("/trainer-upcoming-clients/:trainerId", async (req, res) => {
+  const { trainerId } = req.params;
+  console.log("Fetching upcoming clients for trainer ID:", trainerId);
+
+  try {
+    const [results] = await db.promise().query(
+      `SELECT u.full_name, b.date, b.time_slot
+       FROM trainer_requests tr
+       JOIN bookings b ON tr.booking_id = b.id
+       JOIN users u ON b.user_id = u.user_id
+       WHERE tr.trainer_id = ?
+         AND tr.status = 'Accepted'
+         AND CONCAT(b.date, ' ', b.time_slot) > NOW()
+       ORDER BY b.date, b.time_slot`,
+      [trainerId]
+    );
+
+    console.log("Query result:", results);
+    res.json(results);
+  } catch (err) {
+    console.error("Error fetching upcoming clients:", err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 
 
-// Upcoming trainer clients
-app.get("/trainer-upcoming-clients/:trainerId", (req, res) => {
-    const { trainerId } = req.params;
-    const sql = `
-      SELECT b.date, b.time_slot, u.full_name
-      FROM trainer_requests tr
-      JOIN bookings b ON tr.booking_id = b.id
-      JOIN users u ON b.user_id = u.user_id
-      WHERE tr.trainer_id = ? AND tr.status = 'Accepted'
-      ORDER BY b.date, b.time_slot
-    `;
-    db.query(sql, [trainerId], (err, results) => {
-        res.json(results);
-    });
-});
 
 
 // Admin - Get pending users for approval
@@ -545,15 +559,15 @@ app.get("/admin/pending-users", (req, res) => {
 
 // Admin - Get all bookings with full details
 app.get("/admin/bookings", (req, res) => {
-  const sql = `
+    const sql = `
     SELECT id, user_id, date, time_slot, status, trainer_id
     FROM bookings
     ORDER BY date DESC
   `;
-  db.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
-  });
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
 });
 
 
@@ -574,15 +588,15 @@ app.post("/report-issue", authenticateToken, upload.single("image"), (req, res) 
 
 // Admin - View user reports (updated for table view)
 app.get("/admin/reports", (req, res) => {
-  const sql = `
+    const sql = `
     SELECT id, message, created_at
     FROM reports
     ORDER BY created_at DESC
   `;
-  db.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
-  });
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
 });
 
 
@@ -592,6 +606,28 @@ app.get("/my-sessions", authenticateToken, (req, res) => {
     db.query("SELECT date, time_slot FROM bookings WHERE user_id = ? AND date >= CURDATE() ORDER BY date, time_slot", [userId], (err, results) => {
         if (err) return res.status(500).send(err);
         res.json(results);
+    });
+});
+
+//Admin - Send alerts to all users
+app.post("/send-alert", async(req, res) => {
+    const {message} = req.body;
+    if(!message) return res.status(400).json({error: "Message is required."});
+
+    db.query("SELECT email FROM users WHERE role = 'Member'", async(err, results) => {
+        if (err) return res.status(500).json({error: "Database error"});
+
+        try{
+            const emailPromises = results.map(row =>
+                sendEmail(row.email, "Gym Alert", message)
+            );
+
+            await Promise.all(emailPromises);
+            res.json({message: "Alert sent to all members via email"});
+        }catch (err){
+            console.error("Email send error:", err);
+            res.status(500).json({error: "Failed to send email alerts."});
+        }
     });
 });
 
