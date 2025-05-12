@@ -23,9 +23,13 @@ const io = new Server(server, {
     }
 });
 
+
+
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded images
+require('./check_in')(app);
+
 
 const db = mysql.createConnection({
     host: "192.168.0.13",
@@ -297,6 +301,17 @@ app.post('/book-slot', authenticateToken, (req, res) => {
         });
     });
 });
+
+
+app.get('/api/active-checkins-count', async (req, res) => {
+  try {
+    const [rows] = await db.promise().query("SELECT COUNT(*) AS count FROM active_checkins WHERE checkin_time >= NOW() - INTERVAL 1 HOUR");
+  } catch (err) {
+    console.error("Error fetching active check-ins:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 
 
 // Get bookings

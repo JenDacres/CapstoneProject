@@ -41,7 +41,21 @@ const translations = {
         calendarTitle: "Gym Booking Calendar",
         selectTrainer: "Select a Trainer",
         slotInfo: "Slot Info",
-        selectTrainerOption: "-- Select Trainer --"
+        selectTrainerOption: "-- Select Trainer --",
+        months: [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ],
+        weekdays: [
+            "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+        ],
+        shortWeekdays: [
+            "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
+        ],
+        shortMonths: [
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        ],
 
     },
     es: {
@@ -86,7 +100,21 @@ const translations = {
         calendarTitle: "Calendario de Reservas del Gimnasio",
         selectTrainer: "Seleccionar un Entrenador",
         slotInfo: "Información del Espacio",
-        selectTrainerOption: "-- Seleccionar Entrenador --"
+        selectTrainerOption: "-- Seleccionar Entrenador --",
+        months: [
+            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        ],
+        weekdays: [
+            "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"
+        ],
+        shortWeekdays: [
+            "Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"
+        ],
+        shortMonths: [
+            "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+            "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
+        ],
     },
     fr: {
         settings: "Paramètres",
@@ -131,7 +159,21 @@ const translations = {
         calendarTitle: "Calendrier de Réservation de Gymnase",
         selectTrainer: "Sélectionner un Entraîneur",
         slotInfo: "Informations sur le Créneau",
-        selectTrainerOption: "-- Sélectionner un Entraîneur --"
+        selectTrainerOption: "-- Sélectionner un Entraîneur --",
+        months: [
+            "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+            "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+        ],
+        weekdays: [
+            "Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"
+        ],
+        shortWeekdays: [
+            "Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"
+        ],
+        shortMonths: [
+            "Jan", "Fév", "Mar", "Avr", "Mai", "Jun",
+            "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"
+        ],
     },
     de: {
         settings: "Einstellungen",
@@ -175,6 +217,20 @@ const translations = {
         calendarTitle: "Fitnessstudio-Buchungskalender",
         selectTrainer: "Trainer Auswählen",
         slotInfo: "Slot-Info",
-        selectTrainerOption: "-- Trainer Auswählen --"
+        selectTrainerOption: "-- Trainer Auswählen --",
+        months: [
+            "Januar", "Februar", "März", "April", "Mai", "Juni",
+            "Juli", "August", "September", "Oktober", "November", "Dezember"
+        ],
+        weekdays: [
+            "Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"
+        ],
+        shortWeekdays: [
+            "So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"
+        ],
+        shortMonths: [
+            "Jan", "Feb", "Mär", "Apr", "Mai", "Jun",
+            "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"
+        ],
     }
 };

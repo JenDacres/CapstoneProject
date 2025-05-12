@@ -94,7 +94,7 @@
 
     async function updateActiveCount() {
       try {
-        const res = await fetch('/api/active-count');
+        const res = await fetch('http://localhost:5000/api/active-count');
         const data = await res.json();
         const count = data.count;
         const percentage = Math.min(count / maxCapacity, 1);
@@ -117,7 +117,7 @@
       }
 
       try {
-        const response = await fetch('/api/checkin', {
+        const response = await fetch('http://localhost:5000/api/checkin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: userId })
@@ -130,7 +130,7 @@
           updateActiveCount();
 
           setTimeout(async () => {
-            await fetch('/api/checkout', {
+            await fetch('http://localhost:5000/api/checkout', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ user_id: userId })

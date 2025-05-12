@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MyUWIGym | Member Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="translations.js"></script>
   <script src="language.js"></script>
 </head>
@@ -186,7 +186,6 @@
   }
 </style>
 
-
 <body onload="loadPage()">
   <div class="container" id="main-content"></div>
 
@@ -196,8 +195,6 @@
     <button id="messagesBtn"><i class="fas fa-comment-dots"></i></button>
     <button id="settingsBtn"><i class="fas fa-cog"></i></button>
   </nav>
-
-  <!--<button class="chat-toggle" onclick="toggleChat()">💬</button>-->
 
   <div class="chatbox">
     <div class="chatbox-header">
@@ -213,7 +210,6 @@
 
   <script>
     const token = sessionStorage.getItem("token");
-    let occupancyChart;
 
     function getGreeting() {
       const hour = new Date().getHours();
@@ -233,44 +229,22 @@
     }
 
     async function loadOccupancyChart() {
+      const maxCapacity = 25;
       try {
-        const res = await fetch("http://localhost:3000/occupancy");
+        const res = await fetch("http://localhost:5000/api/active-checkins-count");
         const data = await res.json();
-        const labels = data.map(entry => entry.time);
-        const values = data.map(entry => entry.occupancy);
-        const ctx = document.getElementById('occupancyChart').getContext('2d');
+        const count = data.count;
+        const percent = Math.min(100, Math.round((count / maxCapacity) * 100));
 
-        if (occupancyChart) {
-          occupancyChart.data.labels = labels;
-          occupancyChart.data.datasets[0].data = values;
-          occupancyChart.update();
-        } else {
-          occupancyChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-              labels,
-              datasets: [{
-                label: 'Current Check-ins',
-                data: values,
-                backgroundColor: '#e53935'
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                legend: { display: false }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  title: { display: true, text: 'People in Gym' }
-                }
-              }
-            }
-          });
-        }
+        const bar = document.getElementById("occupancyBar");
+        const text = document.getElementById("occupancyText");
+
+        bar.style.width = `${percent}%`;
+        bar.innerText = `${percent}%`;
+        text.innerText = `${count} of ${maxCapacity} members currently checked in.`;
       } catch (err) {
-        console.error("Error fetching occupancy:", err);
+        console.error("Failed to fetch check-ins count", err);
+        document.getElementById("occupancyText").innerText = "Unable to load occupancy.";
       }
     }
 
@@ -307,8 +281,19 @@
         <h1>${greetingText} ${fullName.split(' ')[0]}</h1>
         <p class="weather-text">${weatherText}</p>
         <div class="plan-box">
-          <strong data-i18n="liveOccupancy">Live Occupancy</strong><br>
-          <canvas id="occupancyChart" width="100%" height="100"></canvas>
+          <strong data-i18n="liveOccupancy">Live Occupancy</strong><br><br>
+          <div style="background: #ddd; border-radius: 10px; height: 25px; overflow: hidden;">
+            <div id="occupancyBar" style="
+              height: 100%;
+              width: 0%;
+              background-color: #e53935;
+              text-align: center;
+              color: white;
+              line-height: 25px;
+              border-radius: 10px 0 0 10px;
+            ">0%</div>
+          </div>
+          <small id="occupancyText">Loading...</small>
         </div>
         <div class="activity-box" style="text-align: center;">
           <strong data-i18n="readyWorkout">Ready to Work Out?</strong><br><br>
@@ -327,11 +312,6 @@
       loadOccupancyChart();
       translatePage();
     }
-
-   /* function toggleChat() {
-      const chatbox = document.querySelector(".chatbox");
-      chatbox.style.display = chatbox.style.display === "none" || !chatbox.style.display ? "block" : "none";
-   }*/
 
     function sendMessage() {
       const input = document.getElementById("userInput");
@@ -355,7 +335,13 @@
     document.getElementById("messagesBtn").addEventListener("click", () => toggleChat());
     document.getElementById("settingsBtn").addEventListener("click", () => window.location.href = "member_settings.html");
 
+    function toggleChat() {
+      const chatbox = document.querySelector(".chatbox");
+      chatbox.style.display = chatbox.style.display === "none" || !chatbox.style.display ? "block" : "none";
+    }
+
     setInterval(loadOccupancyChart, 30000);
   </script>
 </body>
+
 </html>
