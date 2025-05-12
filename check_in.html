@@ -45,8 +45,8 @@
     </div>
 
     <div class="form-group">
-      <label for="user-id">Enter Your ID Number:</label>
-      <input type="text" id="user-id" placeholder="e.g. 1001" />
+      <label for="user-id">Enter User's ID Number:</label>
+      <input type="text" id="user-id" placeholder="e.g. M1" />
     </div>
 
     <div class="form-actions">
@@ -58,7 +58,7 @@
   </div>
 
   <script>
-    const maxCapacity = 25;
+    const maxCapacity = 25; 
 
     const bar = new ProgressBar.Circle('#occupancyContainer', {
       strokeWidth: 16,
@@ -85,9 +85,10 @@
         circle.text.style.fontWeight = '600';
         circle.text.style.color = '#333';
         circle.text.style.position = 'absolute';
-        circle.text.style.top = '50%';
+        circle.text.style.top = '48%'; 
         circle.text.style.left = '50%';
         circle.text.style.transform = 'translate(-50%, -50%)';
+        circle.text.style.lineHeight = '1'; 
       }
     });
 
