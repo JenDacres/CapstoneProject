@@ -9,7 +9,6 @@ CREATE TABLE users (
     user_id VARCHAR(20) UNIQUE NOT NULL,  -- Auto-generated formatted ID
     full_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    role VARCHAR(20) NOT NULL CHECK (role IN ('Member', 'Trainer', 'Administrator')),  -- Fixed ENUM issue
     phone VARCHAR(20) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
