@@ -69,13 +69,13 @@ CREATE TABLE IF NOT EXISTS sessions (
  ALTER TABLE users ADD COLUMN cancellations INT DEFAULT 0; 
 
  CREATE TABLE active_checkins (
-  user_id INT NOT NULL,
+  user_id VARCHAR(20) NOT NULL,
   checkin_time DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS waitlist (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
+    user_id VARCHAR(20),
     session_time DATETIME,
     wait_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
     cancellations INT DEFAULT 0, 
