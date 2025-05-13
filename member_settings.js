@@ -1,20 +1,3 @@
-// Profile picture upload
-document.getElementById("profileForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
-    const formData = new FormData();
-    const file = document.getElementById("profilePic").files[0];
-    formData.append("profile_picture", file);
-
-    const token = localStorage.getItem("token");
-    const res = await fetch("http://localhost:5000/update-profile-picture", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-    });
-
-    const data = await res.json();
-    alert(data.message);
-});
 
 // Password change
 document.getElementById("passwordForm").addEventListener("submit", async function (e) {
@@ -40,6 +23,7 @@ document.getElementById("passwordForm").addEventListener("submit", async functio
 document.getElementById("languageSelect").addEventListener("change", (e) => {
     const selectedLang = e.target.value;
     sessionStorage.setItem("preferredLanguage", selectedLang);
+    setLanguage(selectedLang);  //translation is applied immediately
     alert(`Language set to: ${selectedLang}`);
 });
 
@@ -51,9 +35,7 @@ document.getElementById("reportForm").addEventListener("submit", async function 
 
     const formData = new FormData();
     formData.append("report", reportText);
-    if (imageFile) {
-        formData.append("image", imageFile);
-    }
+
 
     const token = localStorage.getItem("token");
     const res = await fetch("http://localhost:5000/report-issue", {
@@ -66,3 +48,15 @@ document.getElementById("reportForm").addEventListener("submit", async function 
     alert(data.message);
     document.getElementById("reportForm").reset();
 });
+
+function logout() {
+  // Clear local storage or any session data if used
+  localStorage.clear();
+
+  // Redirect to login page
+  window.location.href = "LoginScreen.html";
+}
+
+
+
+
