@@ -32,6 +32,7 @@
                 <button onclick="loadAdminPage('viewReports')">View Reports</button>
                 <button onclick="loadAdminPage('viewBookings')">View Bookings</button>
                 <button onclick="loadAdminPage('approveAccounts')">Approve Accounts</button>
+                <button onclick="logout()">Logout</button>
               </div>
             `;
             document.getElementById("adminMainContent").innerHTML = content;
@@ -71,33 +72,23 @@
                 if (data.length === 0) {
                   content = `<p>No reports submitted yet.</p>`;
                 } else {
-                  const tableRows = data
+                  const reportItems = data
                     .map(
                       (r) => `
-                        <tr>
-                          <td>${r.id}</td>
-                          <td>${r.message}</td>
-                          <td>${new Date(r.created_at).toLocaleString()}</td>
-                        </tr>
+                        <li class="report-item">
+                          <strong>ID:</strong> ${r.id} <br>
+                          <strong>Message:</strong> ${r.message} <br>
+                          <strong>Timestamp:</strong> ${new Date(r.created_at).toLocaleString()}
+                        </li>
                       `
                     )
                     .join("");
 
                   content = `
                     <h2>All Reports</h2>
-                    <table border="1" cellpadding="8" cellspacing="0">
-                      <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>Message</th>
-                          <th>Timestamp</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        ${tableRows}
-                      </tbody>
-                    </table>
-                    <br>
+                    <div class="scrollable-list">
+                      <ul>${reportItems}</ul>
+                    </div>
                     <button onclick="loadAdminPage('dashboard')">← Back</button>
                   `;
                 }
@@ -112,38 +103,26 @@
                 if (data.length === 0) {
                   content = `<p>No bookings found.</p>`;
                 } else {
-                  const tableRows = data
+                  const listItems = data
                     .map(
                       (b) => `
-                        <tr>
-                          <td>${b.id}</td>
-                          <td>${b.user_id}</td>
-                          <td>${b.date}</td>
-                          <td>${b.time_slot}</td>
-                          <td>${b.status}</td>
-                          <td>${b.trainer_id || "—"}</td>
-                        </tr>
+                        <li class="booking-item">
+                          <strong>ID:</strong> ${b.id} <br>
+                          <strong>User:</strong> ${b.user_id} <br>
+                          <strong>Date:</strong> ${b.date} <br>
+                          <strong>Time Slot:</strong> ${b.time_slot} <br>
+                          <strong>Status:</strong> ${b.status} <br>
+                          <strong>Trainer:</strong> ${b.trainer_id || "—"}
+                        </li>
                       `
                     )
                     .join("");
 
                   content = `
                     <h2>View Bookings</h2>
-                    <table border="1" cellpadding="8" cellspacing="0">
-                      <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>User ID</th>
-                          <th>Date</th>
-                          <th>Time Slot</th>
-                          <th>Status</th>
-                          <th>Trainer ID</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        ${tableRows}
-                      </tbody>
-                    </table>
+                    <div class="scrollable-list">
+                      <ul>${listItems}</ul>
+                    </div>
                     <button onclick="loadAdminPage('dashboard')">← Back</button>
                   `;
                 }
@@ -161,7 +140,8 @@
                       <li>${u.full_name} (${u.role}) 
                         <button onclick="respondToUser(${u.id}, true)">Approve</button> 
                         <button onclick="respondToUser(${u.id}, false)">Reject</button>
-                      </li>`
+                      </li>
+                    `
                   )
                   .join("");
                 content = `
@@ -233,6 +213,14 @@
             console.error(err);
             alert("Failed to create trainer.");
           });
+      }
+
+      function logout() {
+        //Clear local storage or session data if used
+        localStorage.clear();
+
+        //Redirect to login page
+        window.location.href = "LoginScreen.html";
       }
     </script>
   </body>

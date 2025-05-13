@@ -15,9 +15,19 @@
       <button onclick="window.location.href='trainer_requests.html'">Requests</button>
       <button onclick="window.location.href='trainer_upcoming_clients.html'">Upcoming Clients</button>
       <button onclick="window.location.href='trainer_change_password.html'">Change Password</button>
+      <button onclick="logout()">Logout</button>
     </div>
 
   </div>
+  <script>
+    function logout() {
+        //Clear local storage or session data if used
+        localStorage.clear();
+
+        //Redirect to login page
+        window.location.href = "LoginScreen.html";
+      }
+  </script>
   
 </body>
 </html>

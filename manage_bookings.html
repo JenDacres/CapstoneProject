@@ -37,6 +37,7 @@
     const editModal = document.getElementById("editModal");
     const newTimeSlot = document.getElementById("newTimeSlot");
     const toast = document.getElementById("toast");
+    const user_id = sessionStorage.getItem("user_id");
 
     let editingBookingId = null;
 
@@ -46,7 +47,7 @@
     }
 
     function loadBookings() {
-      fetch("http://localhost:5000/my-bookings", {
+      fetch(`http://localhost:5000/my-bookings/${user_id}`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${sessionStorage.getItem("token")}`
@@ -55,18 +56,77 @@
         .then(response => response.json())
         .then(data => {
           bookingsList.innerHTML = "";
+
+          if (data.length === 0) {
+            bookingsList.innerHTML = '<li>No bookings found.</li>';
+            return;
+          }
+
           data.forEach(booking => {
+            console.log("Booking loaded:", booking);
+            console.log("Booking ID used:", booking.id); // ← debug output
+
+            if (!booking.id) {
+              console.warn("Booking ID is missing!", booking);
+            }
+
             const li = document.createElement("li");
+
+            const statusClass = booking.status === "Cancelled" ? "cancelled" : "confirmed";
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = booking.status === "Cancelled";
+            checkbox.disabled = booking.status === "Cancelled";
+            checkbox.title = "Cancel booking";
+
+            checkbox.addEventListener("change", () => {
+              if (checkbox.checked && booking.id) {
+                cancelBooking(booking.id);
+              } else {
+                console.warn("Invalid booking ID:", booking.id);
+              }
+            });
+
+
             li.innerHTML = `
-              <span>${booking.date} - ${booking.time}</span>
-              <button onclick="openEditModal(${booking.id})" data-i18n="edit">Edit</button>
-              <button onclick="cancelBooking(${booking.id})" data-i18n="cancel">Cancel</button>
+              <span class="${statusClass}">
+                ${booking.date} - ${booking.time_slot} (${booking.status})
+              </span>
             `;
+
+            li.appendChild(checkbox);
             bookingsList.appendChild(li);
           });
         })
-        .catch(error => console.error("Error loading bookings:", error));
-    } // Closing the loadBookings function
+        .catch(error => {
+          console.error("Error loading bookings:", error);
+          bookingsList.innerHTML = '<li>Error loading bookings.</li>';
+        });
+    }
+
+    function cancelBooking(bookingId) {
+      const user_id = sessionStorage.getItem("user_id");
+
+      console.log("Booking ID used:", bookingId); // Should show the correct ID
+
+      fetch(`http://localhost:5000/cancel-booking/${bookingId}?user_id=${user_id}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log("Server response:", data);
+          showToast(data.message || "Booking cancelled.");
+          loadBookings(); // Refresh
+        })
+        .catch(error => {
+          console.error("Error cancelling booking:", error);
+          showToast("Failed to cancel booking.");
+        });
+    }
 
     function closeModal() {
       editModal.style.display = "none";
@@ -84,6 +144,7 @@
     loadBookings();
     setInterval(loadBookings, 120000); // auto-refresh every 2 minutes
   </script>
+
 </body>
 
 </html>

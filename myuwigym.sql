@@ -14,6 +14,17 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Adding a new column to track monthly visits
+-- This column will be updated at the end of each month to reset the count
+ALTER TABLE users
+ADD COLUMN monthly_visits INT DEFAULT 0,                     --drop
+ADD COLUMN last_reset_month INT DEFAULT MONTH(CURRENT_DATE); --drop
+
+ALTER TABLE users ADD COLUMN profile_picture VARCHAR(255);
+
+ALTER TABLE users ADD monthly_checkins INT DEFAULT 0;
+
+
 -- Bookings Table
 -- This table tracks bookings made by users for gym slots
 CREATE TABLE bookings (
@@ -49,15 +60,7 @@ CREATE TABLE reports (
 );
 
 
--- Adding a new column to track monthly visits
--- This column will be updated at the end of each month to reset the count
-ALTER TABLE users
-ADD COLUMN monthly_visits INT DEFAULT 0,                     --drop
-ADD COLUMN last_reset_month INT DEFAULT MONTH(CURRENT_DATE); --drop
 
-ALTER TABLE users ADD COLUMN profile_picture VARCHAR(255);
-
-ALTER TABLE users ADD monthly_checkins INT DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS sessions (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -74,11 +77,12 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 CREATE TABLE IF NOT EXISTS waitlist (
-    id INT AUTO_INCREMENT PRIMARY KEY,
     user_id VARCHAR(20),
     session_time DATETIME,
     wait_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
     cancellations INT DEFAULT 0, 
-    priority_score INT DEFAULT 0, 
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    priority_score INT DEFAULT 0
 );
+
+ALTER TABLE bookings ADD COLUMN trainer_id VARCHAR(20);
+ALTER TABLE bookings ADD FOREIGN KEY (trainer_id) REFERENCES users(user_id);

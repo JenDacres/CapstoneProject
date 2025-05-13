@@ -108,12 +108,19 @@
   }
 
   @keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {
+
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
       transform: translateX(-50%) translateY(0);
     }
+
     40% {
       transform: translateX(-50%) translateY(-20px);
     }
+
     60% {
       transform: translateX(-50%) translateY(-10px);
     }
@@ -240,8 +247,11 @@
         const text = document.getElementById("occupancyText");
 
         bar.style.width = `${percent}%`;
-        bar.innerText = `${percent}%`;
-        text.innerText = `${count} of ${maxCapacity} members currently checked in.`;
+        bar.innerText = `${count}`;
+        
+        bar.style.backgroundColor = percent < 50 ? "green" : "red";
+
+        text.innerText = `${count} out of ${maxCapacity} members checked in.`;
       } catch (err) {
         console.error("Failed to fetch check-ins count", err);
         document.getElementById("occupancyText").innerText = "Unable to load occupancy.";
@@ -249,6 +259,9 @@
     }
 
     async function loadPage() {
+      const storedLang = sessionStorage.getItem("preferredLanguage") || "en";
+      setLanguage(storedLang);
+
       setActiveNav("homeBtn");
       let fullName = sessionStorage.getItem("full_name");
       let userId = sessionStorage.getItem("user_id");
@@ -286,14 +299,13 @@
             <div id="occupancyBar" style="
               height: 100%;
               width: 0%;
-              background-color: #e53935;
+              background-color: green;
               text-align: center;
               color: white;
               line-height: 25px;
               border-radius: 10px 0 0 10px;
             ">0%</div>
           </div>
-          <small id="occupancyText">Loading...</small>
         </div>
         <div class="activity-box" style="text-align: center;">
           <strong data-i18n="readyWorkout">Ready to Work Out?</strong><br><br>

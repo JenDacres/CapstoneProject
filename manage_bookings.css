@@ -121,3 +121,8 @@ button.delete:hover {
 #toast.show {
   opacity: 1;
 }
+
+.cancelled {
+  color: gray;
+  text-decoration: line-through;
+}

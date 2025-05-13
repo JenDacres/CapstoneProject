@@ -40,6 +40,7 @@ document.getElementById("passwordForm").addEventListener("submit", async functio
 document.getElementById("languageSelect").addEventListener("change", (e) => {
     const selectedLang = e.target.value;
     sessionStorage.setItem("preferredLanguage", selectedLang);
+    setLanguage(selectedLang);  //translation is applied immediately
     alert(`Language set to: ${selectedLang}`);
 });
 
@@ -66,3 +67,15 @@ document.getElementById("reportForm").addEventListener("submit", async function 
     alert(data.message);
     document.getElementById("reportForm").reset();
 });
+
+function logout() {
+  // Clear local storage or any session data if used
+  localStorage.clear();
+
+  // Redirect to login page
+  window.location.href = "LoginScreen.html";
+}
+
+
+
+
