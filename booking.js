@@ -11,6 +11,7 @@ const bookedSlots = {
   "2025-05-13": ["6:00", "8:00", "9:00"],
   "2025-05-20": ["10:00"]
 };
+//const SLOT_CAPACITY = 25;
 
 function setView(mode) {
   viewMode = mode;
@@ -354,5 +355,13 @@ function bookSlot(wantsTrainer) {
     });
 }
 
-
-
+/*async function fetchBookedCounts(dateStr) {
+  try {
+    const response = await fetch(`http://localhost:5000/booked-counts?date=${dateStr}`);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch booked counts:", error);
+    return {};
+  }
+}*/
