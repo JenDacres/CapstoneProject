@@ -108,19 +108,57 @@ input[type="email"]:focus {
 }
 
 .scrollable-list {
-  max-height: 300px; /* Adjust as needed */
+  max-height: 300px;
   overflow-y: auto;
   padding-right: 10px;
   margin-bottom: 20px;
   border: 1px solid #ccc;
   border-radius: 20px;
+  background-color: #f9f9f9;
 }
 
-.scrollable-list ul li {
-  background-color: #e0e0e0;
-  padding: 10px;
-  margin: 8px 0;
+/* Booking-specific list items */
+.booking-item {
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
   border-radius: 20px;
+  background-color: #fff;
   font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  line-height: 1.6;
 }
 
+/* Strong label emphasis inside booking items */
+.booking-item strong {
+  color: #333;
+}
+
+/* Optional scrollbar styling for better UX */
+.scrollable-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable-list::-webkit-scrollbar-thumb {
+  background: #aaa;
+  border-radius: 4px;
+}
+
+.scrollable-list::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+
+.report-item {
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  background-color: #fff;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  line-height: 1.6;
+}
+
+.report-item strong {
+  color: #333;
+}
