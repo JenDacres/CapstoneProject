@@ -56,6 +56,7 @@ const translations = {
             "Jan", "Feb", "Mar", "Apr", "May", "Jun",
             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
         ],
+        logout: "Logout",
 
     },
     es: {
@@ -115,6 +116,7 @@ const translations = {
             "Ene", "Feb", "Mar", "Abr", "May", "Jun",
             "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
         ],
+        logout: "Cerrar Sesión",
     },
     fr: {
         settings: "Paramètres",
@@ -174,6 +176,7 @@ const translations = {
             "Jan", "Fév", "Mar", "Avr", "Mai", "Jun",
             "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"
         ],
+        logout: "Déconnexion",
     },
     de: {
         settings: "Einstellungen",
@@ -232,5 +235,7 @@ const translations = {
             "Jan", "Feb", "Mär", "Apr", "Mai", "Jun",
             "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"
         ],
-    }
-};
+        logout: "Abmelden",
+    },
+  }
+    
