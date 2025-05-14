@@ -15,13 +15,7 @@
     <a href="member.html" class="back-arrow">&#8592;</a>
     <h2 data-i18n="settings">Settings</h2>
 
-    <section>
-      <h3 data-i18n="profilePicture">Profile Picture</h3>
-      <form id="profileForm" enctype="multipart/form-data">
-        <input type="file" id="profilePic" name="profile_picture" accept="image/*" required />
-        <button type="submit" data-i18n="uploadPicture">Upload Picture</button>
-      </form>
-    </section>
+    
 
     <section>
       <h3 data-i18n="changePassword">Change Password</h3>
@@ -35,6 +29,7 @@
 
     <section>
       <h3 data-i18n="languagePreference">Language Preference</h3>
+  
       <select id="languageSelect" onchange="setLanguage(this.value)">
         <option value="en">English</option>
         <option value="es">Español</option>
@@ -48,7 +43,7 @@
       <form id="reportForm" enctype="multipart/form-data">
         <textarea id="reportText" placeholder="Describe the issue..." data-i18n="describeIssue" rows="4"
           required></textarea>
-        <input type="file" id="reportImage" accept="image/*" />
+     
         <button type="submit" data-i18n="sendReport">Send Report</button>
       </form>
     </section>

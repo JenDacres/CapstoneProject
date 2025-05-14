@@ -730,6 +730,7 @@ app.get("/trainer-requests/:trainerId", (req, res) => {
 app.post("/respond-trainer-request", async (req, res) => {
     const { id, response } = req.body;
 
+
     try {
         // Update trainer request status
         await db.promise().query(
@@ -737,48 +738,51 @@ app.post("/respond-trainer-request", async (req, res) => {
             [response, id]
         );
 
+
         // Fetch related data
         const [requestData] = await db.promise().query(
             `SELECT tr.*, u.email, u.full_name, b.date, b.time_slot
-       FROM trainer_requests tr
-       JOIN bookings b ON tr.booking_id = b.id
-       JOIN users u ON b.user_id = u.user_id
-       WHERE tr.id = ?`,
+             FROM trainer_requests tr
+             JOIN bookings b ON tr.booking_id = b.id
+             JOIN users u ON b.user_id = u.user_id
+             WHERE tr.id = ?`,
             [id]
         );
 
+
+        res.status(200).json({ message: "Trainer response recorded successfully." }); //Respond early
+
+
+        // Send email asynchronously (after response is sent)
         if (requestData.length > 0) {
-            const {
-                email,
-                full_name,
-                date,
-                time_slot
-            } = requestData[0];
+            const { email, full_name, date, time_slot } = requestData[0];
+
 
             if (response === "Accepted") {
-                await sendEmail(
+                sendEmail(
                     email,
                     "Trainer Request Approved",
                     `Hello ${full_name},\n\nYour trainer has accepted your session request for ${date} at ${time_slot}.\n\nSee you at the gym!\n\n- MyUWIGym`
-                );
+                ).catch(console.error);
             }
 
-            if (response == "Denied") {
-                await sendEmail(
+
+            if (response === "Denied") {
+                sendEmail(
                     email,
                     "Trainer Request Denied",
                     `Hello ${full_name},\n\nYour trainer has denied your session request for ${date} at ${time_slot}.\n\nSee you at the gym!\n\n- MyUWIGym`
-                )
+                ).catch(console.error);
             }
-            // No need to update bookings.status
         }
 
-        res.status(200).json({ message: "Trainer response recorded successfully." });
+
     } catch (err) {
         console.error("Trainer response error:", err);
         res.status(500).json({ error: "Internal server error" });
     }
 });
+
 
 
 // Trainer - Get upcoming clients
@@ -820,33 +824,59 @@ app.get("/admin/pending-users", (req, res) => {
 });
 
 
-// Admin - Get all bookings with full details
+// Admin - Get all bookings with full user info
 app.get("/admin/bookings", (req, res) => {
-    const sql = `
-    SELECT id, user_id, date, time_slot, status, trainer_id
-    FROM bookings
-    ORDER BY date DESC
+  const sql = `
+    SELECT 
+      b.id, 
+      u.full_name, 
+      b.date, 
+      b.time_slot, 
+      b.status, 
+      b.trainer_id
+    FROM bookings b
+    JOIN users u ON b.user_id = u.user_id
+    ORDER BY b.id DESC
   `;
-    db.query(sql, (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(results);
-    });
+
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Error fetching bookings:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+
+    res.json(results);
+  });
 });
 
 
 
-//Member - Report an issue
-app.post("/report-issue", authenticateToken, upload.single("image"), (req, res) => {
-    const userId = req.user.userId;
-    const { report } = req.body;
-    const imagePath = req.file ? req.file.filename : null; // Save image path if uploaded
 
-    const sql = "INSERT INTO reports (user_id, message, image_path) VALUES (?, ?, ?)";
-    db.query(sql, [userId, report, imagePath], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: "Report submitted successfully!" });
+app.post('/report-issue', authenticateToken, (req, res) => {
+    const user_id = req.user.userId;
+    const { message } = req.body;
+
+    if (!message || message.trim() === "") {
+        return res.status(400).json({ message: 'Report message is required.' });
+    }
+
+    const insertQuery = `
+        INSERT INTO reports (user_id, message)
+        VALUES (?, ?)
+    `;
+
+    db.query(insertQuery, [user_id, message], (err) => {
+        if (err) {
+            console.error("Error inserting report:", err);
+            return res.status(500).json({ message: 'Database error while reporting issue.' });
+        }
+
+        return res.status(200).json({ message: 'Report submitted successfully.' });
     });
 });
+
 
 
 // Admin - View user reports (updated for table view)

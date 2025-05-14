@@ -74,7 +74,8 @@ module.exports = function (app) {
             return res.status(500).json({ message: 'Error recording active check-in.' });
           }
 
-          // Check session capacity
+          // --- Session Capacity Logic Disabled ---
+          /*
           const checkSessionSql = 'SELECT * FROM sessions WHERE session_time = ?';
           db.query(checkSessionSql, [session_time], (err, sessionResults) => {
             if (err || sessionResults.length === 0) {
@@ -122,30 +123,32 @@ module.exports = function (app) {
               });
             }
           });
+          */
+
+          // Send basic success response
+          return res.json({ message: 'Check-in successful!' });
+
         });
       });
     });
   });
 
-  
-
-
   app.get('/api/active-count', (req, res) => {
-const sql = `
-    SELECT COUNT(*) AS count
-    FROM active_checkins
-    WHERE checkin_time >= NOW() - INTERVAL 1 HOUR
-  `;
+    const sql = `
+      SELECT COUNT(*) AS count
+      FROM active_checkins
+      WHERE checkin_time >= NOW() - INTERVAL 1 HOUR
+    `;
 
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error('Error fetching active check-in count:', err);
-      return res.status(500).json({ message: 'Failed to fetch active check-ins.' });
-    }
+    db.query(sql, (err, results) => {
+      if (err) {
+        console.error('Error fetching active check-in count:', err);
+        return res.status(500).json({ message: 'Failed to fetch active check-ins.' });
+      }
 
-    res.json({ count: results[0].count });
+      res.json({ count: results[0].count });
+    });
   });
-      });
 
   setInterval(() => {
     const sql = 'DELETE FROM active_checkins WHERE checkin_time < NOW() - INTERVAL 1 HOUR';
@@ -156,6 +159,5 @@ const sql = `
         console.log(`Auto-removed ${result.affectedRows} expired check-ins.`);
       }
     });
-
   }, 5 * 60 * 1000);
 };
