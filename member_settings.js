@@ -1,5 +1,4 @@
 
-
 // Password change
 document.getElementById("passwordForm").addEventListener("submit", async function (e) {
     e.preventDefault();

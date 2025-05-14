@@ -15,7 +15,6 @@ const bookedSlots = {
 };
 //const SLOT_CAPACITY = 25;
 
-
 function setView(mode) {
   viewMode = mode;
   isYearPickerOpen = false;
@@ -413,7 +412,6 @@ function bookSlot(wantsTrainer) {
       alert("An error occurred while booking. Please try again.");
     });
 }
-
 
 /*async function fetchBookedCounts(dateStr) {
   try {
