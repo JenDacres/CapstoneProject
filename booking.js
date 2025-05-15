@@ -3,12 +3,10 @@ const viewEl = document.getElementById("calendar-view");
 const labelEl = document.getElementById("current-label");
 const yearEl = document.getElementById("calendar-year");
 
-
 let viewMode = 'day';
 let currentDate = new Date();
 let isYearPickerOpen = false;
 let yearPickerYear = currentDate.getFullYear();
-
 
 const bookedSlots = {
   "2026-05-20": ["10:00"]
@@ -21,14 +19,12 @@ function setView(mode) {
   renderCalendar();
 }
 
-
 document.getElementById("prev-btn").onclick = () => {
   if (viewMode === "day") currentDate.setDate(currentDate.getDate() - 1);
   else if (viewMode === "week") currentDate.setDate(currentDate.getDate() - 7);
   else if (viewMode === "month") currentDate.setMonth(currentDate.getMonth() - 1);
   renderCalendar();
 };
-
 
 document.getElementById("next-btn").onclick = () => {
   if (viewMode === "day") currentDate.setDate(currentDate.getDate() + 1);
@@ -37,25 +33,19 @@ document.getElementById("next-btn").onclick = () => {
   renderCalendar();
 };
 
-
 function isDateInCurrentOrAllowedNextMonth(date) {
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
-
-
   const bookingYear = date.getFullYear();
   const bookingMonth = date.getMonth();
-
 
   if (bookingYear === currentYear && bookingMonth === currentMonth) {
     return true;
   }
 
-
   const lastDateOfCurrentMonth = new Date(currentYear, currentMonth + 1, 0);
   const daysRemaining = lastDateOfCurrentMonth.getDate() - now.getDate();
-
 
   return (
     bookingYear === currentYear &&
@@ -64,11 +54,9 @@ function isDateInCurrentOrAllowedNextMonth(date) {
   );
 }
 
-
 function formatDate(date, options = {}) {
   return date.toLocaleDateString(undefined, options);
 }
-
 
 function toggleYearPicker() {
   isYearPickerOpen = !isYearPickerOpen;
@@ -80,37 +68,31 @@ function toggleYearPicker() {
   }
 }
 
-
 function goToToday() {
   currentDate = new Date();
   setView('day');
 }
-
 
 function renderCalendar() {
   viewEl.innerHTML = '';
   viewEl.classList.add("fade");
   yearEl.textContent = currentDate.getFullYear();
 
-
   const backBtn = `<button onclick="goToToday()" style="margin-left:10px;padding:4px 8px;font-size:12px;">Back to Today</button>`;
-
 
   if (!isDateInCurrentOrAllowedNextMonth(currentDate)) {
     labelEl.innerHTML = `${formatDate(currentDate, { month: 'long', year: 'numeric' })} ${backBtn}`;
     viewEl.innerHTML = `<div style="display:flex;justify-content:center;align-items:center;height:200px;font-weight:500;text-align:center;">
-      ⛔ Booking is only available for the current month or within 2 days of month-end.
+      Booking is only available for the current month or within 2 days of month-end.
     </div>`;
     return;
   }
-
 
   if (!isToday(currentDate)) {
     labelEl.innerHTML = `${formatDate(currentDate, { weekday: 'long', month: 'short', day: 'numeric' })} ${backBtn}`;
   } else {
     labelEl.textContent = formatDate(currentDate, { weekday: 'long', month: 'short', day: 'numeric' });
   }
-
 
   if (viewMode === "day") {
     renderDayView(currentDate);
@@ -127,15 +109,13 @@ function renderCalendar() {
   }
 }
 
-
 function renderDayView(date) {
   if (!isDateInCurrentOrAllowedNextMonth(date)) {
     viewEl.innerHTML = `<div style="display:flex;justify-content:center;align-items:center;height:200px;font-weight:500;text-align:center;">
-      ⛔ Booking only allowed for the current month or within 2 days of next month.
+      Booking only allowed for the current month or within 2 days of next month.
     </div>`;
     return;
   }
-
 
   const slots = generateSlotsForDay(date);
   slots.forEach(time => {
@@ -154,7 +134,6 @@ function renderDayView(date) {
   });
 }
 
-
 function renderWeekView(startDate) {
   for (let i = 0; i < 7; i++) {
     const day = new Date(startDate);
@@ -163,9 +142,7 @@ function renderWeekView(startDate) {
     div.className = "slot";
     div.textContent = formatDate(day, { weekday: 'short', day: 'numeric' });
 
-
     if (isToday(day)) div.classList.add("today");
-
 
     if (isDateInCurrentOrAllowedNextMonth(day)) {
       div.onclick = () => {
@@ -177,15 +154,12 @@ function renderWeekView(startDate) {
       div.style.cursor = 'not-allowed';
     }
 
-
     viewEl.appendChild(div);
   }
 }
 
-
 function renderMonthView(date) {
   const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-
 
   for (let d = 1; d <= daysInMonth; d++) {
     const day = new Date(date.getFullYear(), date.getMonth(), d);
@@ -193,9 +167,7 @@ function renderMonthView(date) {
     div.className = "slot";
     div.textContent = formatDate(day, { day: 'numeric', weekday: 'short' });
 
-
     if (isToday(day)) div.classList.add("today");
-
 
     if (isDateInCurrentOrAllowedNextMonth(day)) {
       div.onclick = () => {
@@ -207,21 +179,17 @@ function renderMonthView(date) {
       div.style.cursor = 'not-allowed';
     }
 
-
     viewEl.appendChild(div);
   }
 }
-
 
 function renderYearPicker() {
   viewEl.innerHTML = '';
   viewEl.classList.add("fade");
   yearEl.textContent = `${yearPickerYear}`;
 
-
   const header = document.createElement('div');
   header.className = 'year-header';
-
 
   const prevBtn = document.createElement('button');
   prevBtn.className = 'year-nav';
@@ -231,10 +199,8 @@ function renderYearPicker() {
     renderYearPicker();
   };
 
-
   const yearTitle = document.createElement('h2');
   yearTitle.textContent = yearPickerYear;
-
 
   const nextBtn = document.createElement('button');
   nextBtn.className = 'year-nav';
@@ -244,12 +210,10 @@ function renderYearPicker() {
     renderYearPicker();
   };
 
-
   header.appendChild(prevBtn);
   header.appendChild(yearTitle);
   header.appendChild(nextBtn);
   viewEl.appendChild(header);
-
 
   const months = [
     "January", "February", "March", "April",
@@ -257,10 +221,8 @@ function renderYearPicker() {
     "September", "October", "November", "December"
   ];
 
-
   const grid = document.createElement('div');
   grid.className = 'year-picker';
-
 
   months.forEach((month, i) => {
     const box = document.createElement('div');
@@ -275,57 +237,45 @@ function renderYearPicker() {
     grid.appendChild(box);
   });
 
-
   viewEl.appendChild(grid);
 }
-
 
 function generateSlotsForDay(date) {
   const day = date.getDay();
   const slots = [];
   let start = 5, end = 23;
 
-
   if (day === 6) { start = 9; end = 22; }
   else if (day === 0) return [];
-
 
   for (let hour = start; hour < end; hour++) {
     slots.push(`${hour}:00`);
   }
 
-
   return slots;
 }
-
 
 function isToday(date) {
   const today = new Date();
   return today.toDateString() === date.toDateString();
 }
 
-
 renderCalendar();
-
 
 let selectedDate = "";
 let selectedTime = "";
-
 
 // Trainer Modal
 function openTrainerModal(date, time) {
   selectedDate = date;
   selectedTime = time;
 
-
   const modal = document.getElementById("trainerModal");
   modal.style.display = "block";
   modal.classList.remove("fade-out"); // Reset fade-out if it was applied
 
-
   document.getElementById("trainerSelect").innerHTML = '<option value="">-- Select Trainer --</option>';
   document.getElementById("trainerSelect").disabled = true;
-
 
   // Set a loading state or fetch trainers
   fetch("http://localhost:5000/trainers")
@@ -342,14 +292,10 @@ function openTrainerModal(date, time) {
     });
 }
 
-
-
-
 // Close modal when clicking outside of it
 function closeTrainerModal() {
   const modal = document.getElementById("trainerModal");
   modal.classList.add("fade-out");
-
 
   setTimeout(() => {
     modal.style.display = "none";
@@ -357,24 +303,20 @@ function closeTrainerModal() {
   }, 300); // matches the CSS animation duration
 }
 
-
 function bookSlot(wantsTrainer) {
   const userId = sessionStorage.getItem("user_id");
   const trainerDropdown = document.getElementById("trainerSelect");
   const trainerIdToSend = wantsTrainer ? trainerDropdown.value : null;
-
 
   if (wantsTrainer && !trainerIdToSend) {
     alert("Please select a trainer.");
     return;
   }
 
-
   if (!selectedDate || !selectedTime) {
     alert("Please select a date and time.");
     return;
   }
-
 
   const token = sessionStorage.getItem("token");
   if (!token) {
@@ -382,13 +324,11 @@ function bookSlot(wantsTrainer) {
     return;
   }
 
-
   console.log("Booking slot:", {
     date: selectedDate,
     time_slot: selectedTime,
     trainer_id: trainerIdToSend
   });
-
 
   fetch("http://localhost:5000/book-slot", {
     method: "POST",
@@ -413,13 +353,3 @@ function bookSlot(wantsTrainer) {
     });
 }
 
-/*async function fetchBookedCounts(dateStr) {
-  try {
-    const response = await fetch(`http://localhost:5000/booked-counts?date=${dateStr}`);
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Failed to fetch booked counts:", error);
-    return {};
-  }
-}*/
