@@ -74,57 +74,6 @@ module.exports = function (app) {
             return res.status(500).json({ message: 'Error recording active check-in.' });
           }
 
-          // --- Session Capacity Logic Disabled ---
-          /*
-          const checkSessionSql = 'SELECT * FROM sessions WHERE session_time = ?';
-          db.query(checkSessionSql, [session_time], (err, sessionResults) => {
-            if (err || sessionResults.length === 0) {
-              console.error('Error or no session found:', err);
-              return res.status(500).json({ message: 'Error checking session capacity.' });
-            }
-
-            const session = sessionResults[0];
-
-            if (session.booked < session.capacity) {
-              const sql = 'UPDATE sessions SET booked = booked + 1 WHERE id = ?';
-              db.query(sql, [session.id], (err) => {
-                if (err) {
-                  console.error('Error booking session:', err);
-                  return res.status(500).json({ message: 'Error booking session.' });
-                }
-
-                return res.json({ message: 'Check-in and session booking successful!' });
-              });
-            } else {
-              // Add to waitlist if session is full
-              db.query('SELECT monthly_checkins, cancellations FROM users WHERE id = ?', [user_id], (err, userResults) => {
-                if (err || userResults.length === 0) {
-                  return res.status(500).json({ message: 'Error fetching user data.' });
-                }
-
-                const { monthly_checkins, cancellations } = userResults[0];
-                const waitTime = new Date();
-
-                const insertWaitlist = 'INSERT INTO waitlist (user_id, session_time, wait_time) VALUES (?, ?, NOW())';
-                db.query(insertWaitlist, [user_id, session_time], (err, waitlistResult) => {
-                  if (err) {
-                    return res.status(500).json({ message: 'Error adding to waitlist.' });
-                  }
-
-                  const priorityScore = calculatePriorityScore(waitTime, cancellations, monthly_checkins);
-                  const updatePriority = 'UPDATE waitlist SET priority_score = ? WHERE id = ?';
-                  db.query(updatePriority, [priorityScore, waitlistResult.insertId], (err) => {
-                    if (err) {
-                      return res.status(500).json({ message: 'Error updating priority score.' });
-                    }
-                    res.json({ message: 'Session full. Added to waitlist.', priorityScore });
-                  });
-                });
-              });
-            }
-          });
-          */
-
           // Send basic success response
           return res.json({ message: 'Check-in successful!' });
 
