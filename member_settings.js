@@ -1,4 +1,3 @@
-
 // Password change
 document.getElementById("passwordForm").addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -53,8 +52,6 @@ document.getElementById("reportForm").addEventListener("submit", async function 
     document.getElementById("reportForm").reset();
 });
 
-
-
 function logout() {
   // Clear local storage or any session data if used
   localStorage.clear();
@@ -62,7 +59,3 @@ function logout() {
   // Redirect to login page
   window.location.href = "LoginScreen.html";
 }
-
-
-
-
