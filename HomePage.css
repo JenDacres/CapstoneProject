@@ -44,10 +44,7 @@ body {
   /* or any size that fits your layout */
   margin-bottom: 20px;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
-
 }
-
-
 
 h1 {
   font-size: 28px;
@@ -93,7 +90,6 @@ p {
   opacity: 0.9;
 }
 
-/* 🔥 Entrance Animation */
 .fade-in {
   opacity: 0;
   transform: translateY(20px);
@@ -107,7 +103,6 @@ p {
   }
 }
 
-/* 🌚 Dark Mode */
 body.dark-mode {
   background: linear-gradient(135deg, #0f0f0f, #2c2c2c);
   color: #eee;
@@ -133,7 +128,6 @@ body.dark-mode .btn-register {
   background-color: #000;
 }
 
-/* 📱 Responsive Touchups */
 @media (max-width: 400px) {
   .container {
     padding: 40px 20px;
