@@ -91,7 +91,7 @@
 
         const data = await response.json();
         if (response.ok) {
-          sessionStorage.setItem("token", data.token); // ✅ Update token
+          sessionStorage.setItem("token", data.token); // Update token
         } else {
           console.error("Failed to refresh token");
         }
@@ -100,7 +100,7 @@
       }
     }
 
-    // ✅ Periodically Refresh Token (Every 55 mins)
+    // Periodically Refresh Token (Every 55 mins)
     setInterval(refreshToken, 55 * 60 * 1000);
   </script>
 </body>
