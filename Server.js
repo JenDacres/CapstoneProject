@@ -12,7 +12,6 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -23,13 +22,10 @@ const io = new Server(server, {
     }
 });
 
-
-
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded images
 require('./check_in')(app);
-
 
 const db = mysql.createConnection({
     host: "192.168.0.13",
@@ -37,7 +33,6 @@ const db = mysql.createConnection({
     password: "uwigym",
     database: "myuwigym"
 });
-
 
 const twilioClient = twilio(
     process.env.TWILIO_ACCOUNT_SID,
@@ -113,7 +108,7 @@ function calculatePriorityScore(waitTime, cancellations, checkinsThisMonth) {
     console.log(`WaitTime: ${waitTime}, Minutes Waiting: ${minutesWaiting}`);
 }
 
-// 
+// Updates Waitlist
 function updateWaitlistPriorities() {
     const query = `
     SELECT w.id, w.wait_time, u.cancellations, u.monthly_checkins, w.user_id
@@ -142,34 +137,28 @@ function updateWaitlistPriorities() {
     });
 }
 
-// ⏱️ Call every 5 minutes
+// Call every 5 minutes
 setInterval(updateWaitlistPriorities, 1 * 60 * 1000);
 
 
 function fillCancelledSlot(date, time_slot) {
     const sessionTime = new Date(`${date}T${time_slot}`);
-
-    // Step 1: Check how many bookings exist for that date
     const countQuery = `
         SELECT COUNT(*) AS count
         FROM bookings
         WHERE date = ? AND status = 'Booked'
     `;
-
+    
     db.query(countQuery, [date], (err, countResult) => {
         if (err) {
             console.error("Error checking booking count:", err);
             return;
         }
-
         const bookingCount = countResult[0].count;
-
         if (bookingCount >= 25) {
             console.log(`No slots available on ${date} — bookings full (${bookingCount}/25).`);
             return;
         }
-
-        // Step 2: Find the highest priority user for that session
         const waitlistQuery = `
             SELECT * FROM waitlist
             WHERE session_time = ?
@@ -182,29 +171,22 @@ function fillCancelledSlot(date, time_slot) {
                 console.error("Error fetching waitlist:", err);
                 return;
             }
-
             if (waitlistResults.length === 0) {
                 console.log(`No users in waitlist for ${date} ${time_slot}`);
                 return;
             }
 
             const userToPromote = waitlistResults[0];
-
-            // Step 3: Promote the user
             const insertBooking = `
                 INSERT INTO bookings (user_id, date, time_slot, status)
                 VALUES (?, ?, ?, 'Booked')
             `;
-
             db.query(insertBooking, [userToPromote.user_id, date, time_slot], (err) => {
                 if (err) {
                     console.error("Error inserting booking from waitlist:", err);
                     return;
                 }
-
-                // Step 4: Remove the user from waitlist
                 const deleteQuery = `DELETE FROM waitlist WHERE id = ?`;
-
                 db.query(deleteQuery, [userToPromote.id], (err) => {
                     if (err) {
                         console.error("Error deleting user from waitlist:", err);
@@ -217,21 +199,17 @@ function fillCancelledSlot(date, time_slot) {
     });
 }
 
-
-
 // Generate random password for trainer
 function generateRandomPassword(length = 10) {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
     return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
-
 // Generate user_id based on role and AUTO_INCREMENT value
 function generateUserId(role, nextId) {
     const rolePrefix = { Member: "M", Trainer: "T", Administrator: "A" };
     return rolePrefix[role] + nextId;  // e.g., M101
 }
-
 
 // Generate JWT Token
 function generateToken(user) {
@@ -242,7 +220,6 @@ function generateToken(user) {
     );
 }
 
-
 // Generate Refresh Token
 function generateRefreshToken(user) {
     return jwt.sign(
@@ -251,9 +228,6 @@ function generateRefreshToken(user) {
         { expiresIn: "7d" }
     );
 }
-
-
-
 
 // Middleware to Authenticate Token
 function authenticateToken(req, res, next) {
@@ -316,9 +290,6 @@ app.post("/register", (req, res) => {
     });
 });
 
-
-
-
 // Login Route
 app.post("/login", (req, res) => {
     const { email, password } = req.body;
@@ -333,8 +304,8 @@ app.post("/login", (req, res) => {
             if (err) return res.status(500).json({ message: "Password verification error" });
             if (!match) return res.status(401).json({ message: "Incorrect email or password" });
 
-            const token = generateToken(user);           // ✅ 1-hour access token
-            const refreshToken = generateRefreshToken(user); // ✅ 7-day refresh token
+            const token = generateToken(user);           // 1-hour access token
+            const refreshToken = generateRefreshToken(user); // 7-day refresh token
 
             res.json({
                 message: "Login successful",
@@ -347,8 +318,6 @@ app.post("/login", (req, res) => {
         });
     });
 });
-
-
 
 // Book a slot
 app.post('/book-slot', authenticateToken, (req, res) => {
@@ -424,57 +393,19 @@ app.post('/book-slot', authenticateToken, (req, res) => {
     });
 });
 
-
-//To count how many bookings are already made for a slot
-/* app.get('/booked-counts', (req, res) => {
-   const {date} = req.query;
-
-   if(!date) {
-       return res,status(400).json({message: 'Missing date parameter'});
-   }
-
-   const query = `
-       SELECT time_slot, COUNT(*) AS count
-       FROM bookings
-       WHERE date = ? AND status = 'Booked'
-       GROUP BY time_slot
-   `;
-
-   db.query(query, [date], (err, results) => {
-       if(err) {
-           console.error('Error fetching booked counts:', err);
-           return res.status(500).json({message: 'Database error', error: err});
-       }
-
-       const counts = {};
-       results.forEach(row => {
-           counts[row.time_slot] = row.count;
-       });
-
-       res.json(counts);
-   });
-});*/
-
-// Assuming Express and db connection are already set up
-
-
 app.post("/cancel-booking/:bookingId", authenticateToken, (req, res) => {
     const bookingId = req.params.bookingId;
     const user_id = req.query.user_id;
 
-
     console.log("Received request to cancel booking");
     console.log("User ID:", user_id);
     console.log("Booking ID:", bookingId);
-
 
     if (!bookingId) {
         console.error("Missing booking ID");
         return res.status(400).json({ message: "Booking ID is required" });
     }
 
-
-    // Step 1: First fetch booking details
     const fetchBooking = `SELECT date, time_slot FROM bookings WHERE id = ? AND user_id = ?`;
     db.query(fetchBooking, [bookingId, user_id], (err, bookingResult) => {
         if (err || bookingResult.length === 0) {
@@ -482,12 +413,9 @@ app.post("/cancel-booking/:bookingId", authenticateToken, (req, res) => {
             return res.status(404).json({ message: "Booking not found or unauthorized" });
         }
 
-
         const date = bookingResult[0].date;
         const time_slot = bookingResult[0].time_slot;
 
-
-        // Step 2: Proceed with deletion
         const sql = `DELETE FROM bookings WHERE id = ? AND user_id = ?`;
         db.query(sql, [bookingId, user_id], (err, result) => {
             if (err) {
@@ -495,14 +423,11 @@ app.post("/cancel-booking/:bookingId", authenticateToken, (req, res) => {
                 return res.status(500).json({ message: "Server error" });
             }
 
-
             if (result.affectedRows === 0) {
                 console.warn("No booking found or unauthorized");
                 return res.status(404).json({ message: "Booking not found or unauthorized" });
             }
 
-
-            // Step 3: Update user cancellations
             db.query(
                 `UPDATE users SET cancellations = cancellations + 1 WHERE user_id = ?`,
                 [user_id],
@@ -511,10 +436,7 @@ app.post("/cancel-booking/:bookingId", authenticateToken, (req, res) => {
                 }
             );
 
-
-            // Step 4: Try to fill cancelled slot
             fillCancelledSlot(date, time_slot);
-
 
             console.log("Booking successfully deleted");
             res.json({ message: "Booking successfully deleted" });
@@ -545,9 +467,6 @@ app.get("/my-bookings/:user_id", async (req, res) => {
     });
 });
 
-
-
-
 app.get('/api/active-checkins-count', async (req, res) => {
     try {
         const [rows] = await db.promise().query(
@@ -559,14 +478,6 @@ app.get('/api/active-checkins-count', async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 });
-
-
-
-
-
-
-
-
 
 // Get Available Slots
 app.get("/available-times/:date", authenticateToken, async (req, res) => {
@@ -593,11 +504,6 @@ app.get("/available-times/:date", authenticateToken, async (req, res) => {
     }
 });
 
-
-
-
-
-
 // Create Trainer
 app.post("/admin/add-trainer", async (req, res) => {
     const { firstName, lastName, email } = req.body;
@@ -618,7 +524,6 @@ app.post("/admin/add-trainer", async (req, res) => {
     `;
     db.query(insertSql, [fullName, email, phone, passwordHash], (err, result) => {
         if (err) {
-            // 🔍 Improved logging here
             console.error("Insert error:", err);
             return res.status(500).json({ message: "Failed to add trainer.", error: err.message });
         }
@@ -654,14 +559,12 @@ Please change your password after first login.
     });
 });
 
-
 // Trainer list
 app.get("/trainers", (req, res) => {
     db.query("SELECT user_id, full_name FROM users WHERE role = 'Trainer'", (err, results) => {
         res.json(results);
     });
 });
-
 
 // Trainer requests
 app.get("/trainer-requests/:trainerId", (req, res) => {
@@ -690,14 +593,12 @@ app.get("/trainer-requests/:trainerId", (req, res) => {
 app.post("/respond-trainer-request", async (req, res) => {
     const { id, response } = req.body;
 
-
     try {
         // Update trainer request status
         await db.promise().query(
             "UPDATE trainer_requests SET status = ? WHERE id = ?",
             [response, id]
         );
-
 
         // Fetch related data
         const [requestData] = await db.promise().query(
@@ -709,14 +610,11 @@ app.post("/respond-trainer-request", async (req, res) => {
             [id]
         );
 
-
-        res.status(200).json({ message: "Trainer response recorded successfully." }); //Respond early
-
+        res.status(200).json({ message: "Trainer response recorded successfully." }); 
 
         // Send email asynchronously (after response is sent)
         if (requestData.length > 0) {
             const { email, full_name, date, time_slot } = requestData[0];
-
 
             if (response === "Accepted") {
                 sendEmail(
@@ -725,7 +623,6 @@ app.post("/respond-trainer-request", async (req, res) => {
                     `Hello ${full_name},\n\nYour trainer has accepted your session request for ${date} at ${time_slot}.\n\nSee you at the gym!\n\n- MyUWIGym`
                 ).catch(console.error);
             }
-
 
             if (response === "Denied") {
                 sendEmail(
@@ -736,14 +633,11 @@ app.post("/respond-trainer-request", async (req, res) => {
             }
         }
 
-
     } catch (err) {
         console.error("Trainer response error:", err);
         res.status(500).json({ error: "Internal server error" });
     }
 });
-
-
 
 // Trainer - Get upcoming clients
 app.get("/trainer-upcoming-clients/:trainerId", async (req, res) => {
@@ -771,10 +665,6 @@ app.get("/trainer-upcoming-clients/:trainerId", async (req, res) => {
     }
 });
 
-
-
-
-
 // Admin - Get pending users for approval
 app.get("/admin/pending-users", (req, res) => {
     db.query("SELECT id, full_name, email, role FROM users WHERE status = 'Pending' AND role = 'Member'", (err, results) => {
@@ -799,20 +689,15 @@ app.get("/admin/bookings", (req, res) => {
     ORDER BY b.id DESC
   `;
 
-
   db.query(sql, (err, results) => {
     if (err) {
       console.error("Error fetching bookings:", err);
       return res.status(500).json({ error: "Database error" });
     }
 
-
     res.json(results);
   });
 });
-
-
-
 
 app.post('/report-issue', authenticateToken, (req, res) => {
     const user_id = req.user.userId;
@@ -837,8 +722,6 @@ app.post('/report-issue', authenticateToken, (req, res) => {
     });
 });
 
-
-
 // Admin - View user reports (updated for table view)
 app.get("/admin/reports", (req, res) => {
     const sql = `
@@ -851,7 +734,6 @@ app.get("/admin/reports", (req, res) => {
         res.json(results);
     });
 });
-
 
 //Member sessions
 app.get("/my-sessions", authenticateToken, (req, res) => {
@@ -884,9 +766,7 @@ app.post("/send-alert", async (req, res) => {
     });
 });
 
-
-
-// Admin Approve User (FINAL version with email notification)
+// Admin Approve User 
 app.post("/admin/approve-user", (req, res) => {
     const { id, approve } = req.body;
     const status = approve ? 'Approved' : 'Rejected';
@@ -976,8 +856,6 @@ io.on("connection", (socket) => {
         console.log("Socket disconnected:", socket.id);
     });
 });
-
-
 
 // Start server only after DB connects
 const PORT = process.env.PORT || 5000;
