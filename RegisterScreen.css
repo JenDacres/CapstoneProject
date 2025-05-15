@@ -1,26 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #e0f7fa, #fce4ec);
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     margin: 0;
+    overflow: hidden;
+    transition: background 0.4s, color 0.4s;
 }
 
 .container {
-    background: white;
-    padding: 30px 40px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    padding: 50px 40px;
+    border-radius: 30px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
     width: 100%;
-    max-width: 400px;
+    max-width: 300px;
     position: relative;
+    text-align: left;
 }
 
 h2 {
-    text-align: center;
+    text-align: left;
+    font-size: 24px;
+    font-weight: 700;
     margin-bottom: 20px;
+    color: #111;
 }
 
 form {
@@ -29,33 +37,42 @@ form {
 }
 
 label {
-    font-weight: bold;
+    font-weight: 600;
     margin-bottom: 5px;
     margin-top: 15px;
+    color: #333;
 }
 
 input,
 select {
-    padding: 10px;
+    padding: 12px;
     font-size: 16px;
     border: 1px solid #ccc;
-    border-radius: 5px;
+    border-radius: 12px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+input:focus {
+    border-color: #888;
 }
 
 .submit-button {
-    background-color: #02080eac;
+    background-color: #000;
     color: white;
-    padding: 12px;
+    padding: 14px;
     font-size: 16px;
     border: none;
-    border-radius: 5px;
-    margin-top: 25px;
+    border-radius: 25px;
+    margin-top: 30px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
 .submit-button:hover {
-    background-color: #01060c;
+    transform: scale(1.03);
+    background-color: #111;
 }
 
 .back-button {
@@ -84,14 +101,6 @@ input.invalid, select.invalid {
     text-align: center;
     font-weight: bold;
     color: green;
-}
-
-/* Success message fade-in */
-.success-message {
-    margin-top: 15px;
-    text-align: center;
-    font-weight: bold;
-    color: green;
     opacity: 0;
     transition: opacity 0.8s ease-in-out;
 }
@@ -100,7 +109,7 @@ input.invalid, select.invalid {
     opacity: 1;
 }
 
-/* Password strength meter */
+/* Password strength indicator */
 #password-strength {
     margin-top: 5px;
     font-size: 13px;
@@ -115,4 +124,21 @@ input.invalid, select.invalid {
 }
 .strong {
     color: green;
+}
+
+/* Responsive */
+@media (max-width: 400px) {
+    .container {
+        padding: 30px 20px;
+        border-radius: 20px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    .submit-button {
+        font-size: 14px;
+        padding: 12px;
+    }
 }

@@ -78,11 +78,13 @@
 
                     const result = await res.json();
 
+
                     if (res.ok) {
                         form.reset();
                         sessionStorage.removeItem("userData");
                         successDiv.textContent = `✅ ${result.message}`;
                         successDiv.classList.add("visible");
+
                         setTimeout(() => window.location.href = "member.html", 3000);
                     } else {
                         alert(result.error || "Registration failed.");

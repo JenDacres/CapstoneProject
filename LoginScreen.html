@@ -53,9 +53,9 @@
           sessionStorage.setItem("password", password);
           sessionStorage.setItem("user_id", data.user_id);
           sessionStorage.setItem("full_name", data.full_name);
-          
+
           console.log("Stored User ID:", sessionStorage.getItem("user_id"));
-          
+
           const roleRedirect = {
             "Member": "member.html",
             "Trainer": "trainer.html",
@@ -70,6 +70,12 @@
         showError("Network error. Please check your connection.");
       }
     });
+
+    function showError(message) {
+      const errorMessageElement = document.getElementById("error-message");
+      errorMessageElement.textContent = message;
+      errorMessageElement.style.display = "block"; // Show the error message
+    }
 
     // Automatically Refresh Token When Expired
     async function refreshToken() {
@@ -98,5 +104,3 @@
     setInterval(refreshToken, 55 * 60 * 1000);
   </script>
 </body>
-
-</html>

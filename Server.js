@@ -316,47 +316,7 @@ app.post("/register", (req, res) => {
     });
 });
 
-//Logout
-app.post("/logout", (req, res) => {
-    req.session.destroy(err => {
-        if (err) return res.status(500).json({ error: "Logout failed" });
-        res.clearCookie("connect.sid");
-        res.json({ message: "Logged out successfully" });
-    });
-});
 
-// Profile Picture Upload 
-app.post("/update-profile-picture", upload.single("profile_picture"), (req, res) => {
-    console.log("User data:", req.user);
-    if (!req.user || !req.user.user_id) {
-        return res.status(400).json({ message: "User not authenticated" });
-    }
-    if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded" });
-    }
-
-    try {
-        // Generate profile picture URL (assuming static file serving)
-        const fileUrl = `/uploads/profile_pics/${req.file.filename}`;
-
-        // Update profile picture in Database (Example SQL)
-        const updateQuery = `UPDATE users SET profile_picture = $1 WHERE user_id = $2 RETURNING *`;
-        const values = [fileUrl, req.user.user_id]; // Ensure `req.user` contains authenticated user info
-
-        // Execute DB query (pseudo-code)
-        db.query(updateQuery, values, (err, result) => {
-            if (err) {
-                return res.status(500).json({ message: "Database update failed" });
-            }
-            res.status(200).json({ message: "Profile picture updated successfully", profile_picture: fileUrl });
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// Serve Static Profile Pictures
-app.use("/uploads/profile_pics", express.static(path.join(__dirname, "uploads/profile_pics")));
 
 
 // Login Route

@@ -83,5 +83,15 @@ body {
     font-size: 14px;
     margin-bottom: 15px;
   }
+
+  .success-message {
+      color: #28a745;
+      background-color: #e6ffe6;
+      border: 1px solid #8fd19e;
+      padding: 10px;
+      border-radius: 20px;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
   
   

@@ -235,38 +235,4 @@
   </script>
 </body>
 
-<<<<<<< HEAD </html>
-  =======
-  if (!firstName || !lastName || !email) {
-  alert("Please fill in all fields.");
-  return;
-  }
-
-  fetch("http://localhost:5000/admin/add-trainer", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ firstName, lastName, email }),
-  })
-  .then((res) => res.json())
-  .then((data) => {
-  alert(data.message);
-  loadAdminPage("dashboard");
-  })
-  .catch((err) => {
-  console.error(err);
-  alert("Failed to create trainer.");
-  });
-  }
-
-  function logout() {
-  //Clear local storage or session data if used
-  localStorage.clear();
-
-  //Redirect to login page
-  window.location.href = "LoginScreen.html";
-  }
-  </script>
-  </body>
-
 </html>
->>>>>>> 8471267215411ebf6c317a82a41c383d6ee5d6da
