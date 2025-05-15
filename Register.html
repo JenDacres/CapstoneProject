@@ -47,7 +47,7 @@
             const form = document.getElementById("register-form");
             const successDiv = document.getElementById("success-message");
 
-            // ✅ Auto-fill saved data
+            // Auto-fill saved data
             const savedData = JSON.parse(sessionStorage.getItem("userData"));
             if (savedData) {
                 document.getElementById("full-name").value = savedData.full_name;
@@ -65,7 +65,7 @@
                 const fullPhone = `+${phone}`;
                 const password = form.password.value;
 
-                // ✅ Save to session storage
+                // Save to session storage
                 const userData = { full_name, email, phone: fullPhone, password };
                 sessionStorage.setItem("userData", JSON.stringify(userData));
 
@@ -82,7 +82,7 @@
                     if (res.ok) {
                         form.reset();
                         sessionStorage.removeItem("userData");
-                        successDiv.textContent = `✅ ${result.message}`;
+                        successDiv.textContent = ` ${result.message}`;
                         successDiv.classList.add("visible");
 
                         setTimeout(() => window.location.href = "member.html", 3000);
@@ -95,7 +95,7 @@
             });
         });
 
-        // ✅ Password Strength Check
+        //Password Strength Check
         function checkPasswordStrength() {
             const password = document.getElementById("password").value;
             const strength = getStrength(password);
@@ -103,14 +103,14 @@
             document.getElementById("password-strength").className = strength.class;
         }
 
-        // ✅ Password Match Check
+        // Password Match Check
         function checkPasswordMatch() {
             const password = document.getElementById("password").value;
             const confirm = document.getElementById("confirm-password").value;
             document.getElementById("error-confirm").textContent = password === confirm ? "" : "Passwords do not match.";
         }
 
-        // ✅ Password Strength Logic
+        // Password Strength Logic
         function getStrength(password) {
             if (password.length < 6) return { label: "Too short", class: "weak" };
             const strong = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
