@@ -15,15 +15,7 @@ CREATE TABLE users (
 );
 
 -- Adding a new column to track monthly visits
--- This column will be updated at the end of each month to reset the count
-ALTER TABLE users
-ADD COLUMN monthly_visits INT DEFAULT 0,                     --drop
-ADD COLUMN last_reset_month INT DEFAULT MONTH(CURRENT_DATE); --drop
-
-ALTER TABLE users ADD COLUMN profile_picture VARCHAR(255);
-
 ALTER TABLE users ADD monthly_checkins INT DEFAULT 0;
-
 
 -- Bookings Table
 -- This table tracks bookings made by users for gym slots
@@ -35,7 +27,6 @@ CREATE TABLE bookings (
     status VARCHAR(20) DEFAULT 'Booked' CHECK (status IN ('Booked', 'Cancelled')),
     FOREIGN KEY (trainer_id) REFERENCES users(user_id)
   );
-
 
 -- Trainer Requests Table
 -- This table tracks requests made by users to book trainers
@@ -49,7 +40,6 @@ CREATE TABLE trainer_requests (
   FOREIGN KEY (trainer_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
-
 -- Report Table
 -- This table stores reports made by users about trainers or other gym equipment
 CREATE TABLE reports (
@@ -58,9 +48,6 @@ CREATE TABLE reports (
   message TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-
-
 
 CREATE TABLE IF NOT EXISTS sessions (
   id INT AUTO_INCREMENT PRIMARY KEY,
