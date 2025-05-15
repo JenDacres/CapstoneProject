@@ -397,9 +397,6 @@ app.post("/cancel-booking/:bookingId", authenticateToken, (req, res) => {
     const bookingId = req.params.bookingId;
     const user_id = req.query.user_id;
 
-    console.log("Received request to cancel booking");
-    console.log("User ID:", user_id);
-    console.log("Booking ID:", bookingId);
 
     if (!bookingId) {
         console.error("Missing booking ID");
@@ -438,7 +435,6 @@ app.post("/cancel-booking/:bookingId", authenticateToken, (req, res) => {
 
             fillCancelledSlot(date, time_slot);
 
-            console.log("Booking successfully deleted");
             res.json({ message: "Booking successfully deleted" });
         });
     });
@@ -550,7 +546,7 @@ Please change your password after first login.
         // Send Email using external function
         sendEmail(email, "Trainer Account Created", loginInfoMessage)
             .then(() => {
-                return res.json({ message: "Trainer created and notified via email and WhatsApp (simulated)." });
+                return res.json({ message: "Trainer created and notified via email." });
             })
             .catch(err => {
                 console.error("Email error:", err);
