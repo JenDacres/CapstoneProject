@@ -49,12 +49,6 @@ CREATE TABLE reports (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS sessions (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  session_time DATETIME NOT NULL,
-  capacity INT NOT NULL,   
-  booked INT DEFAULT 0 
-  );
 
  ALTER TABLE users ADD COLUMN cancellations INT DEFAULT 0; 
 
@@ -62,6 +56,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   user_id VARCHAR(20) NOT NULL,
   checkin_time DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
 
 CREATE TABLE IF NOT EXISTS waitlist (
     user_id VARCHAR(20),
