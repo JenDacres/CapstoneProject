@@ -28,10 +28,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve u
 require('./check_in')(app);
 
 const db = mysql.createConnection({
-    host: "192.168.0.13",
+    host: process.env.DB_HOST || "localhost",
     user: "admin",
-    password: "uwigym",
-    database: "myuwigym"
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME || "myuwigym",
 });
 
 const twilioClient = twilio(
